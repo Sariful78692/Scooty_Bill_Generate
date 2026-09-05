@@ -9,7 +9,7 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
-  <div class="app-container">
+  <div class="app-container hidden">
     
     <!-- Sidebar -->
     <aside class="sidebar">
@@ -43,6 +43,7 @@
           <a href="#" class="nav-link" onclick="loadPage('report/report.html', 'report')"><i class="fa-solid fa-file-lines"></i> Daily Report</a>
         </li>
       </ul>
+      <div class="bottom-actions"><a href="#" class="nav-link settings-link" onclick="openSettings()"><i class="fa-solid fa-gear"></i> Settings</a><button class="logout-side" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button></div>
     </aside>
 
     <main class="main-content" id="app-content">

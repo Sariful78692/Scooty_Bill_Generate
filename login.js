@@ -1,0 +1,5 @@
+const AUTH_KEY = "daduAuth";
+function getAuth() { return JSON.parse(localStorage.getItem(AUTH_KEY) || JSON.stringify({ username: "admin", password: "admin123" })); }
+function forgotUsername() { alert("Your username is: " + getAuth().username); }
+function forgotPassword() { const u = prompt("Enter your username:"); alert(u === getAuth().username ? "Your password is: " + getAuth().password : "Username not found."); }
+document.getElementById("login-form").addEventListener("submit", e => { e.preventDefault(); const a=getAuth(); if(document.getElementById("login-username").value.trim()===a.username && document.getElementById("login-password").value===a.password) { localStorage.setItem("daduLoggedIn","true"); location.replace("index.html"); } else document.getElementById("login-message").innerText="Invalid username or password"; });

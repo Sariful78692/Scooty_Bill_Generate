@@ -1,4 +1,25 @@
 // Paste your NEW deployed Google Apps Script Web App URL here!
+
+// ---------------- LOGIN / ACCOUNT ----------------
+const AUTH_KEY = "daduAuth";
+if (localStorage.getItem("daduLoggedIn") !== "true") location.replace("login.html");
+function getAuth() { return JSON.parse(localStorage.getItem(AUTH_KEY) || JSON.stringify({ username: "admin", password: "admin123" })); }
+function showApp() { const login = document.getElementById("login-page"); if (login) login.classList.add("hidden"); const app = document.querySelector(".app-container"); if (app) app.classList.remove("hidden"); }
+function logout() { localStorage.removeItem("daduLoggedIn"); location.reload(); }
+window.forgotUsername = function() { alert("Your username is: " + getAuth().username); };
+window.forgotPassword = function() { const u = prompt("Enter your username:"); if (u === getAuth().username) alert("Your password is: " + getAuth().password); else alert("Username not found."); };
+window.openSettings = function() {
+  const app = document.getElementById("app-content");
+  app.innerHTML = `<section class="content-section settings-page"><h1><i class="fa-solid fa-gear"></i> Settings</h1><div class="settings-card"><h3>User Account</h3><p>Change your login username and password</p><span class="settings-buttons"><button class="btn-primary" onclick="changeAccount()">Change Username / Password</button></span></div></section>`;
+};
+
+window.changeAccount = function() { const auth = getAuth(); const old = prompt("Enter current password:"); if (old !== auth.password) return alert("Current password is incorrect."); const username = prompt("New username:", auth.username); const password = prompt("New password:"); if (username && password) { localStorage.setItem(AUTH_KEY, JSON.stringify({ username, password })); alert("Username and password changed successfully."); } };
+document.addEventListener("DOMContentLoaded", function() {
+  const form = document.getElementById("login-form");
+  if (localStorage.getItem("daduLoggedIn") === "true") showApp();
+  if (form) form.addEventListener("submit", function(e) { e.preventDefault(); const auth = getAuth(); const u = document.getElementById("login-username").value.trim(); const p = document.getElementById("login-password").value; if (u === auth.username && p === auth.password) { localStorage.setItem("daduLoggedIn", "true"); showApp(); } else document.getElementById("login-message").innerText = "Invalid username or password"; });
+});
+
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfbwVNv4C3Y_-3KPLkb9h-foqU_kz-ah8sH7j2hPXFSotgE8EzVfQIbNf7Lwlpno42Xw/exec";
 
 let customerDataList = [];
