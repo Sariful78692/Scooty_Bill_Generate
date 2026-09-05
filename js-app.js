@@ -20,7 +20,7 @@ document.addEventListener("DOMContentLoaded", function() {
   if (form) form.addEventListener("submit", function(e) { e.preventDefault(); const auth = getAuth(); const u = document.getElementById("login-username").value.trim(); const p = document.getElementById("login-password").value; if (u === auth.username && p === auth.password) { localStorage.setItem("daduLoggedIn", "true"); showApp(); } else document.getElementById("login-message").innerText = "Invalid username or password"; });
 });
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwfbwVNv4C3Y_-3KPLkb9h-foqU_kz-ah8sH7j2hPXFSotgE8EzVfQIbNf7Lwlpno42Xw/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwlHWy8CRZO9N2T1ZY_yVgfJSGREQ-0cfptbmCltfvI7MkRCO-P38nJuItycd3uZodrvQ/exec";
 
 let customerDataList = [];
 let billDataList = []; 
@@ -249,7 +249,7 @@ window.generateReport = function() {
   const limit = document.getElementById("reportPageSize")?.value || "all";
   const filteredBills = limit === "all" ? filteredAll : filteredAll.slice(0, Number(limit));
   const tbody = document.getElementById("report-table-body"); if (!tbody) return; tbody.innerHTML = "";
-  if (!filteredBills.length) { tbody.innerHTML = `<tr><td colspan="5" class="text-center">No sales found for this date range.</td></tr>`; return; }
+  if (!filteredBills.length) { tbody.innerHTML = `<tr><td colspan="5" class="text-center">No sales found for this date range.</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`; return; }
   filteredBills.forEach(bill => {
     const tr = document.createElement("tr"); const amt = parseAmount(bill["Total Amount"]);
     tr.innerHTML = `<td><strong>${bill["Bill ID"]}</strong></td><td>${safeDisplay(bill["Customer Name"])}</td><td><span class="badge">${safeDisplay(bill["Item"])}</span><br><small>${safeDisplay(bill["Vehicle Company"])}</small></td><td>${safeDisplay(bill["Vehicle Model"])}</td><td>₹${amt.toFixed(2)}</td>`;
@@ -257,10 +257,26 @@ window.generateReport = function() {
   });
 };
 
+function showToast(message) {
+  const toast = document.createElement("div");
+  toast.className = "toast-message";
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add("show"), 10);
+  setTimeout(() => { toast.classList.remove("show"); setTimeout(() => toast.remove(), 300); }, 3000);
+}
+
 // ---------------- CUSTOMER ENTRY / DETAILS ----------------
 function initCustomerEntryForm() {
   const form = document.getElementById("customer-form");
   if(form) form.addEventListener("submit", handleCustomerFormSubmit);
+  const photoInput = document.getElementById("photoInput");
+  if (photoInput) photoInput.addEventListener("change", function () {
+    if (this.files[0] && this.files[0].size > 1024 * 1024) {
+      showToast("Please upload below 1 MB");
+      this.value = "";
+    }
+  });
 }
 
 function getDirectDriveUrl(url) {
@@ -286,7 +302,7 @@ function renderCustomerTable(list) {
   
   thead.innerHTML = `<tr><th>Photo</th><th>Name</th><th>Mobile</th><th>Vehicle</th><th>Company</th><th>Model</th><th>Actions</th></tr>`;
   tbody.innerHTML = "";
-  if(list.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="text-center">No customers found.</td></tr>`; return; }
+  if(list.length === 0) { tbody.innerHTML = `<tr><td colspan="7" class="text-center">No customers found.</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`; return; }
   
   list.forEach(cust => {
     const tr = document.createElement("tr");
@@ -395,7 +411,7 @@ window.deleteCustomer = async function(id) {
 }
 
 async function compressImage(file) {
-  if (!file.type.startsWith("image/") || file.size < 500000) return file;
+  if (!file.type.startsWith("image/") || file.size < 100000) return file;
   const image = await new Promise((resolve, reject) => { const img = new Image(); img.onload = () => resolve(img); img.onerror = reject; img.src = URL.createObjectURL(file); });
   const scale = Math.min(1, 1200 / image.width); const canvas = document.createElement("canvas"); canvas.width = Math.round(image.width * scale); canvas.height = Math.round(image.height * scale);
   canvas.getContext("2d").drawImage(image, 0, 0, canvas.width, canvas.height);
@@ -404,6 +420,13 @@ async function compressImage(file) {
 
 async function handleCustomerFormSubmit(e) {
   e.preventDefault();
+  const maxPhotoSize = 1024 * 1024; // 1 MB
+  const selectedPhoto = document.getElementById("photoInput")?.files[0];
+  if (selectedPhoto && selectedPhoto.size > maxPhotoSize) {
+    showToast("Please upload below 1 MB");
+    document.getElementById("photoInput").value = "";
+    return;
+  }
   const submitBtn = document.getElementById("submit-btn");
   submitBtn.disabled = true; submitBtn.innerText = "Saving...";
 
@@ -469,7 +492,7 @@ function renderBillCustomerTable(list) {
   const tbody = document.getElementById("bill-customer-tbody");
   if (!tbody) return;
   tbody.innerHTML = "";
-  if(list.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center">No customers.</td></tr>`; return; }
+  if(list.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center">No customers.</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>`; return; }
   
   list.forEach(cust => {
     const tr = document.createElement("tr");
@@ -517,7 +540,7 @@ window.openBillCreatePage = function(custId) {
   document.getElementById("billChassis").value = cust["Chassis Number"] || "";
   document.getElementById("billEngine").value = cust["Engine Number"] || "";
   
-  ["billHsn","billRate","billAmount","billSgst","billCgst","billIgst","billTotal","billBattery","billWarranty","billBankSelect"].forEach(id => document.getElementById(id).value = "");
+  ["billHsn","billRate","billAmount","billSgst","billCgst","billIgst","billTotal","billBattery","billBatterySerial","billCharger","billChargerSerial","billWarranty","billBankSelect"].forEach(id => document.getElementById(id).value = "");
   document.getElementById("billQnty").value = 1;
   document.getElementById("print-bill-btn").classList.add("hidden");
   
@@ -662,7 +685,10 @@ window.saveBillToDatabase = async function() {
     totalAmount: parseAmount(totalAmount).toFixed(2),
     date: formatDateForStorage(), 
     batteryDetails: document.getElementById("billBattery").value,
-    batteryWarranty: document.getElementById("billWarranty").value, 
+    batteryWarranty: document.getElementById("billWarranty").value,
+    batterySerialNo: document.getElementById("billBatterySerial").value,
+    charger: document.getElementById("billCharger").value,
+    chargerSerialNo: document.getElementById("billChargerSerial").value, 
     bankName: selectedBank, bankIfsc: bIfsc, bankAccName: bName, bankAccNo: bAcc, bankBranch: bBranch
   };
   
@@ -707,6 +733,9 @@ window.editGeneratedBill = function(billId) {
   document.getElementById("billTotal").value = String(bill["Total Amount"]).replace(/[^0-9.-]+/g, "") || "";
   document.getElementById("billBattery").value = bill["Battery Details"] || "";
   document.getElementById("billWarranty").value = bill["Battery Warranty"] || "";
+  document.getElementById("billBatterySerial").value = bill["Battery Serial No"] || "";
+  document.getElementById("billCharger").value = bill["Charger"] || "";
+  document.getElementById("billChargerSerial").value = bill["Charger Serial No"] || "";
   
   const bankSelect = document.getElementById("billBankSelect");
   const bName = bill["Bank Name"] || "";
@@ -768,27 +797,37 @@ window.printGeneratedBill = function() {
   document.getElementById("invCustName").innerText = currentBillCustomerObj["Customer Name"];
   document.getElementById("invMobile").innerText = currentBillCustomerObj["Mobile No"];
   document.getElementById("invAddress").innerText = currentBillCustomerObj["Address"];
+  document.getElementById("invCarItem").innerText = document.getElementById("billItem").value;
+  document.getElementById("invCarCompany").innerText = document.getElementById("billCompany").value || "-";
+  document.getElementById("invCarModel").innerText = document.getElementById("billModel").value || "-";
+  document.getElementById("invCarChassis").innerText = document.getElementById("billChassis").value || "-";
+  document.getElementById("invCarMotor").innerText = document.getElementById("billEngine").value || "-";
+  document.getElementById("invBattery").innerText = document.getElementById("billBattery").value || "-";
+  document.getElementById("invBatterySerial").innerText = document.getElementById("billBatterySerial").value || "-";
+  document.getElementById("invCharger").innerText = document.getElementById("billCharger").value || "-";
+  document.getElementById("invChargerSerial").innerText = document.getElementById("billChargerSerial").value || "-";
+  document.getElementById("invWarranty").innerText = document.getElementById("billWarranty").value || "-";
   
   const amount = parseFloat(document.getElementById("billAmount").value) || 0;
   const sgst = parseFloat(document.getElementById("billSgst").value) || 0;
   const cgst = parseFloat(document.getElementById("billCgst").value) || 0;
   const igst = parseFloat(document.getElementById("billIgst").value) || 0;
+  document.getElementById("invCgstRate").innerText = `${cgst}%`; document.getElementById("invSgstRate").innerText = `${sgst}%`; document.getElementById("invIgstRate").innerText = `${igst}%`;
   const qnty = document.getElementById("billQnty").value;
   const battery = document.getElementById("billBattery").value;
   
   const comp = document.getElementById("billCompany").value;
   const mod = document.getElementById("billModel").value;
 
-  let tHtml = `<tr><td><strong>${document.getElementById("billItem").value}</strong><br><small>Company: ${comp}</small><br><small>Model: ${mod}</small><br><small>CH NO- ${document.getElementById("billChassis").value}</small><br><small>MOT NO: ${document.getElementById("billEngine").value}</small></td>
-    <td>${document.getElementById("billHsn").value}</td><td>${qnty} PCS</td><td>₹${document.getElementById("billRate").value}</td><td>₹${amount.toFixed(2)}</td></tr>`;
-  if(battery) tHtml += `<tr><td><strong>${battery}</strong><br><small>(${document.getElementById("billWarranty").value})</small></td><td>-</td><td>${qnty} PCS</td><td>-</td><td>-</td></tr>`;
+  let tHtml = `<tr><td><strong>${document.getElementById("billItem").value}</strong><br><small>Company: ${comp}</small><br><small>Model: ${mod}</small><br><small>Chassis Number: ${document.getElementById("billChassis").value}</small><br><small>Motor Number: ${document.getElementById("billEngine").value}</small></td>
+    <td>${document.getElementById("billHsn").value}</td><td>${qnty} PCS</td><td>Rs.${document.getElementById("billRate").value}</td><td>Rs.${((amount*cgst)/100).toFixed(2)}</td><td>Rs.${((amount*sgst)/100).toFixed(2)}</td><td>Rs.${((amount*igst)/100).toFixed(2)}</td><td>Rs.${amount.toFixed(2)}</td><td>Rs.${document.getElementById("billTotal").value}</td></tr>`;
   document.getElementById("invTableBody").innerHTML = tHtml;
 
   let taxHtml = "";
   if(sgst>0) taxHtml += `<div>SGST @ ${sgst}%: ₹${((amount*sgst)/100).toFixed(2)}</div>`;
   if(cgst>0) taxHtml += `<div>CGST @ ${cgst}%: ₹${((amount*cgst)/100).toFixed(2)}</div>`;
   if(igst>0) taxHtml += `<div>IGST @ ${igst}%: ₹${((amount*igst)/100).toFixed(2)}</div>`;
-  document.getElementById("taxBreakdownList").innerHTML = taxHtml;
+  document.getElementById("taxBreakdownList").innerHTML = "";
 
   const total = parseFloat(document.getElementById("billTotal").value) || 0;
   document.getElementById("invFinalTotal").innerText = total.toFixed(2);
@@ -819,24 +858,34 @@ window.printExistingBill = function(billId) {
   document.getElementById("invCustName").innerText = bill["Customer Name"];
   document.getElementById("invMobile").innerText = cust ? cust["Mobile No"] : "";
   document.getElementById("invAddress").innerText = cust ? cust["Address"] : "";
+  document.getElementById("invCarItem").innerText = bill["Item"] || "-";
+  document.getElementById("invCarCompany").innerText = bill["Vehicle Company"] || "-";
+  document.getElementById("invCarModel").innerText = bill["Vehicle Model"] || "-";
+  document.getElementById("invCarChassis").innerText = bill["Chassis No"] || "-";
+  document.getElementById("invCarMotor").innerText = bill["Engine No"] || "-";
+  document.getElementById("invBattery").innerText = bill["Battery Details"] || "-";
+  document.getElementById("invBatterySerial").innerText = bill["Battery Serial No"] || "-";
+  document.getElementById("invCharger").innerText = bill["Charger"] || "-";
+  document.getElementById("invChargerSerial").innerText = bill["Charger Serial No"] || "-";
+  document.getElementById("invWarranty").innerText = bill["Battery Warranty"] || "-";
   
   const amount = parseFloat(String(bill["Amount"]).replace(/[^0-9.-]+/g, "")) || 0;
   const sgst = parseFloat(String(bill["SGST"]).replace(/[^0-9.-]+/g, "")) || 0;
   const cgst = parseFloat(String(bill["CGST"]).replace(/[^0-9.-]+/g, "")) || 0;
   const igst = parseFloat(String(bill["IGST"]).replace(/[^0-9.-]+/g, "")) || 0;
+  document.getElementById("invCgstRate").innerText = `${cgst}%`; document.getElementById("invSgstRate").innerText = `${sgst}%`; document.getElementById("invIgstRate").innerText = `${igst}%`;
   const qnty = bill["Quantity"];
   const battery = bill["Battery Details"];
   
-  let tHtml = `<tr><td><strong>${bill["Item"]}</strong><br><small>Company: ${bill["Vehicle Company"] || "-"}</small><br><small>Model: ${bill["Vehicle Model"] || "-"}</small><br><small>CH NO- ${bill["Chassis No"]}</small><br><small>MOT NO: ${bill["Engine No"]}</small></td>
-    <td>${bill["HSN"]}</td><td>${qnty} PCS</td><td>₹${bill["Rate"]}</td><td>₹${amount.toFixed(2)}</td></tr>`;
-  if(battery) tHtml += `<tr><td><strong>${battery}</strong><br><small>(${bill["Battery Warranty"]})</small></td><td>-</td><td>${qnty} PCS</td><td>-</td><td>-</td></tr>`;
+  let tHtml = `<tr><td><strong>${bill["Item"]}</strong><br><small>Company: ${bill["Vehicle Company"] || "-"}</small><br><small>Model: ${bill["Vehicle Model"] || "-"}</small><br><small>Chassis Number: ${bill["Chassis No"]}</small><br><small>Motor Number: ${bill["Engine No"]}</small></td>
+    <td>${bill["HSN"]}</td><td>${qnty} PCS</td><td>Rs.${bill["Rate"]}</td><td>Rs.${((amount*cgst)/100).toFixed(2)}</td><td>Rs.${((amount*sgst)/100).toFixed(2)}</td><td>Rs.${((amount*igst)/100).toFixed(2)}</td><td>Rs.${amount.toFixed(2)}</td><td>Rs.${bill["Total Amount"]}</td></tr>`;
   document.getElementById("invTableBody").innerHTML = tHtml;
 
   let taxHtml = "";
   if(sgst>0) taxHtml += `<div>SGST @ ${sgst}%: ₹${((amount*sgst)/100).toFixed(2)}</div>`;
   if(cgst>0) taxHtml += `<div>CGST @ ${cgst}%: ₹${((amount*cgst)/100).toFixed(2)}</div>`;
   if(igst>0) taxHtml += `<div>IGST @ ${igst}%: ₹${((amount*igst)/100).toFixed(2)}</div>`;
-  document.getElementById("taxBreakdownList").innerHTML = taxHtml;
+  document.getElementById("taxBreakdownList").innerHTML = "";
 
   const total = parseFloat(String(bill["Total Amount"]).replace(/[^0-9.-]+/g, "")) || 0;
   document.getElementById("invFinalTotal").innerText = total.toFixed(2);

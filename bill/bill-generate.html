@@ -38,7 +38,10 @@
       <div class="form-group"><label>IGST (%)</label><input type="number" id="billIgst" placeholder="0" oninput="calculateBillAmounts()"></div>
       <div class="form-group"><label>Total Amount (₹)</label><input type="number" id="billTotal" readonly style="background: #e2e8f0; font-weight: bold; color: #0f172a;"></div>
       <div class="form-group"><label>Battery Details</label><input type="text" id="billBattery" placeholder="e.g. GRAPHENE 60V 32AH"></div>
-      <div class="form-group"><label>Battery Warranty</label><input type="text" id="billWarranty" placeholder="e.g. 1 YEAR WARRANTY"></div>
+      <div class="form-group"><label>Battery Serial No</label><input type="number" id="billBatterySerial" type="number" min="0" step="1" inputmode="numeric" placeholder="Enter number only"></div>
+      <div class="form-group"><label>Charger</label><input type="text" id="billCharger" placeholder="Enter charger details"></div>
+      <div class="form-group"><label>Charger Serial No</label><input type="number" id="billChargerSerial" type="number" min="0" step="1" inputmode="numeric" placeholder="Enter number only"></div>
+      <div class="form-group"><label>Battery Warranty</label><input type="number" id="billWarranty" type="number" min="0" step="1" inputmode="numeric" placeholder="Years"></div>
       
       <div class="form-group"><label>Bank Name</label>
         <div class="select-with-btn">
@@ -94,8 +97,11 @@
       <p><strong>Mobile:</strong> <span id="invMobile"></span></p>
       <p><strong>Address:</strong> <span id="invAddress"></span></p>
     </div>
+    <div class="invoice-car-details"><h4>Details Car</h4><div><strong id="invCarItem"></strong><span>Company: <b id="invCarCompany"></b></span><span>Model: <b id="invCarModel"></b></span><span>Chassis Number: <b id="invCarChassis"></b></span><span>Motor Number: <b id="invCarMotor"></b></span></div></div>
+    <div class="invoice-battery-details"><h4>Battery & Charger Details</h4><div class="battery-row"><strong>  Battery: <b id="invBattery"></b></strong><span>&nbsp;&nbsp;&nbsp;Battery Serial No: <b id="invBatterySerial"></b></span><span>&nbsp;&nbsp;&nbsp;Warranty: <b id="invWarranty"></b> Year</span></div><br>
+    <div class="charger-row"><strong>Charger: <b id="invCharger"></b></strong><span>&nbsp;&nbsp;&nbsp;Charger Serial No: <b id="invChargerSerial"></b></span></div></div>
     <table class="inv-table">
-      <thead><tr><th>ITEMS</th><th>HSN</th><th>QTY.</th><th>RATE</th><th>AMOUNT</th></tr></thead>
+      <thead><tr><th>ITEMS</th><th>HSN</th><th>QTY.</th><th>RATE</th><th>CGST<br><small id="invCgstRate"></small></th><th>SGST<br><small id="invSgstRate"></small></th><th>IGST<br><small id="invIgstRate"></small></th><th>AMOUNT</th><th>TOTAL AMOUNT</th></tr></thead>
       <tbody id="invTableBody"></tbody>
     </table>
     <div class="inv-footer-section">
@@ -108,12 +114,13 @@
       </div>
       <div class="inv-totals">
         <div id="taxBreakdownList" style="font-size: 13px; text-align: right; margin-bottom: 5px;"></div>
-        <p style="font-size: 15px; border-top: 1px solid #333; padding-top: 5px;"><strong>Total Amount: ₹<span id="invFinalTotal"></span></strong></p>
+        <p style="font-size: 15px; border-top: 1px solid #333; padding-top: 5px;"><strong>Grand Total Amount: ₹<span id="invFinalTotal"></span></strong></p>
       </div>
     </div>
     <div class="inv-in-words" style="margin-top: 15px; font-size: 13px; border-top: 1px dashed #ccc; padding-top: 8px;">
       <p><strong>Total Amount (In Words):</strong> <span id="invTotalInWords" style="text-transform: capitalize;"></span></p>
     </div>
+    <div class="service-details"><h4>Service Details</h4><div class="service-boxes"><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
     <div class="inv-sign"><p>AUTHORISED SIGNATORY FOR<br>DINO ELECTRIC CYCLE SHOP</p></div>
   </div>
 </div>

@@ -78,14 +78,14 @@ th { background-color: #f8fafc; color: #475569; }
   #printable-invoice-area, #printable-invoice-area * { visibility: visible; }
   #printable-invoice-area { position: absolute; left: 0; top: 0; width: 100%; display: block !important; }
 }
-.invoice-box { width: 100%; max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; font-size: 14px; line-height: 24px; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; background: #fff; }
-.inv-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 10px; margin-bottom: 15px; }
+.invoice-box { width: 100%; max-width: 500px; margin: auto; padding: 10px; border: 1px solid #eee; font-size: 12px; line-height: 15px; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; background: #fff; }
+.inv-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 0px; margin-bottom: 5px; }
 .inv-header h3 { margin: 0; color: #0f172a; font-size: 20px; }
-.inv-header p { font-size: 11px; color: #555; margin: 2px 0; }
+.inv-header p { font-size: 20px; color: #555; margin: 2px 0; }
 .inv-meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; }
 .inv-customer { margin-bottom: 20px; background: #f8fafc; padding: 10px; border-radius: 5px; }
 .inv-customer p { margin: 2px 0; }
-.inv-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+.inv-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
 .inv-table th, .inv-table td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
 .inv-table th { background-color: #f1f5f9; }
 .inv-footer-section { display: flex; justify-content: space-between; margin-top: 20px; }
@@ -186,3 +186,131 @@ th { background-color: #f8fafc; color: #475569; }
 .login-card input:hover { transform: translateY(-3px); border-color: #60a5fa; box-shadow: 0 7px 16px rgba(37,99,235,.14); }
 .login-card input:focus { outline: none; transform: translateY(-3px); border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.16), 0 7px 16px rgba(37,99,235,.14); }
 
+
+.toast-message { position: fixed; top: 24px; right: 24px; z-index: 9999; background: #b91c1c; color: #fff; padding: 13px 20px; border-radius: 6px; font-weight: 700; box-shadow: 0 5px 18px rgba(0,0,0,.25); transform: translateY(-20px); opacity: 0; transition: all .3s ease; }
+.toast-message.show { transform: translateY(0); opacity: 1; }
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 8mm;
+  }
+
+  body {
+    background: #fff !important;
+    color: #000 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  .invoice-car-details, 
+  .service-details {
+    display: none !important;
+  }
+
+  #printable-invoice-area {
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* পুরো A4 পেজ জুড়ে নেওয়ার জন্য কন্টেইনার */
+  .invoice-box {
+    width: 100% !important;
+    max-width: none !important;
+    min-height: 275mm !important;
+    border: 2px solid #000 !important;
+    padding: 20px !important;
+    font-size: 14px !important;
+    line-height: 1.4 !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+
+  /* হেডার সেকশন */
+  .inv-header {
+    border-bottom: 2px solid #000 !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 12px !important;
+  }
+  .inv-header h3 {
+    font-size: 24px !important;
+    font-weight: 800 !important;
+    margin-bottom: 6px !important;
+  }
+  .inv-header p {
+    font-size: 12px !important;
+  }
+
+  /* বিল ও কাস্টমার ডিটেইলস */
+  .inv-meta {
+    font-size: 14px !important;
+    margin-bottom: 12px !important;
+  }
+  .inv-customer {
+    font-size: 14px !important;
+    padding: 10px !important;
+    margin-bottom: 15px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 6px !important;
+  }
+
+  /* সিলেক্টেড সেকশনটি (Battery Details) আলাদা করার বিশেষ বর্ডার */
+  .invoice-battery-details {
+    display: block !important;
+    border: 1.5px solid #000 !important;
+    background-color: #f1f5f9 !important;
+    padding: 10px 14px !important;
+    margin-bottom: 18px !important;
+    border-radius: 6px !important;
+    font-size: 13px !important;
+  }
+  .invoice-battery-details h4 {
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    margin-bottom: 6px !important;
+    border-bottom: 1px dashed #000 !important;
+    padding-bottom: 4px !important;
+  }
+
+  /* আইটেম টেবিল */
+  .inv-table {
+    width: 100% !important;
+    margin-bottom: 20px !important;
+  }
+  .inv-table th {
+    font-size: 12px !important;
+    padding: 10px 6px !important;
+    background-color: #e2e8f0 !important;
+    border-bottom: 2px solid #000 !important;
+  }
+  .inv-table td {
+    font-size: 13px !important;
+    padding: 10px 6px !important;
+    border-bottom: 1px solid #cbd5e1 !important;
+  }
+  .inv-table td small {
+    font-size: 11px !important;
+  }
+
+  /* ব্যাংক সেকশন ও ফুটারের সাইন */
+  .inv-footer-section {
+    margin-top: auto !important;
+    padding-top: 15px !important;
+  }
+  .inv-bank {
+    font-size: 13px !important;
+  }
+  .inv-totals {
+    font-size: 16px !important;
+    font-weight: bold !important;
+  }
+  .inv-sign {
+    margin-top: 40px !important;
+    font-size: 13px !important;
+    font-weight: bold !important;
+  }
+}
