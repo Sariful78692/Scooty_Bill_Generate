@@ -1,0 +1,36 @@
+<section id="report-section" class="content-section">
+  <h1>Daily Sales Report</h1>
+  
+  <div class="form-card" style="display: flex; gap: 15px; align-items: flex-end; margin-bottom: 20px; padding: 15px;">
+    <div class="form-group" style="flex: 1; max-width: 250px;">
+      <label>From Date</label>
+      <input type="date" id="reportFromDate" onchange="generateReport()" style="padding: 10px; border-radius: 5px; border: 1px solid #cbd5e1; width: 100%;">
+    </div>
+    <div class="form-group" style="flex: 1; max-width: 250px;"><label>To Date</label><input type="date" id="reportToDate" onchange="generateReport()" style="padding: 10px; border-radius: 5px; border: 1px solid #cbd5e1; width: 100%;"></div>
+    <select id="reportPageSize" onchange="generateReport()" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px;"><option value="all">Display All</option><option value="50">Display 50</option><option value="100">Display 100</option></select>
+    <button class="btn-primary bg-blue" id="reportSearchButton" type="button"><i class="fa-solid fa-filter"></i> Search Report</button>
+  </div>
+  
+  <div class="table-responsive">
+    <table id="report-table">
+      <thead>
+        <tr>
+          <th>Bill No</th>
+          <th>Customer Name</th>
+          <th>Vehicle Details</th>
+          <th>Model No</th>
+          <th>Amount (₹)</th>
+
+        </tr>
+      </thead>
+      <tbody id="report-table-body">
+        <tr><td colspan="5" class="text-center">Select a date to view report...</td></tr>
+      </tbody>
+    </table>
+  </div>
+  
+  <div style="margin-top: 15px; padding: 15px; background: #fff; border-radius: 8px; text-align: right; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+    <span style="font-size: 16px; color: #64748b; font-weight: 600;">Total Amount for Date Range:</span> 
+    <span style="font-size: 24px; color: #10b981; font-weight: bold; margin-left: 10px;">₹<span id="reportTotalSales">0.00</span></span>
+  </div>
+</section>

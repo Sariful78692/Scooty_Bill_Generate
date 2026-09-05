@@ -1,0 +1,51 @@
+<section id="dashboard-section" class="content-section">
+  <h1>Dashboard</h1>
+  <div class="dashboard-cards">
+    <div class="stat-card border-blue">
+      <div class="stat-icon bg-blue-light text-blue"><i class="fa-solid fa-users"></i></div>
+      <div class="stat-info">
+        <span class="stat-title">Total Customers</span>
+        <h3 class="stat-value" id="count-total">0</h3>
+      </div>
+      <div class="stat-bg-circle bg-blue-light"></div>
+    </div>
+    <div class="stat-card border-yellow">
+      <div class="stat-icon bg-yellow-light text-yellow"><i class="fa-solid fa-motorcycle"></i></div>
+      <div class="stat-info">
+        <span class="stat-title">Scooty</span>
+        <h3 class="stat-value" id="count-scooty">0</h3>
+      </div>
+      <div class="stat-bg-circle bg-yellow-light"></div>
+    </div>
+    <div class="stat-card border-green">
+      <div class="stat-icon bg-green-light text-green"><i class="fa-solid fa-motorcycle"></i></div>
+      <div class="stat-info">
+        <span class="stat-title">Bike</span>
+        <h3 class="stat-value" id="count-bike">0</h3>
+      </div>
+      <div class="stat-bg-circle bg-green-light"></div>
+    </div>
+    <div class="stat-card border-red">
+      <div class="stat-icon bg-red-light text-red"><i class="fa-solid fa-bicycle"></i></div>
+      <div class="stat-info">
+        <span class="stat-title">Cycle</span>
+        <h3 class="stat-value" id="count-cycle">0</h3>
+      </div>
+      <div class="stat-bg-circle bg-red-light"></div>
+    </div>
+  </div>
+
+  <div class="dashboard-cards sales-summary"><div class="stat-card border-green"><div class="stat-info"><span class="stat-title">Today Sales</span><h3 class="stat-value">₹<span id="sales-today">0.00</span></h3></div></div><div class="stat-card border-blue"><div class="stat-info"><span class="stat-title">This Month Sales</span><h3 class="stat-value">₹<span id="sales-month">0.00</span></h3></div></div></div>
+
+  <!-- Sales Charts Section -->
+  <div class="charts-container" style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
+    <div class="chart-card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); height: 360px; position: relative;">
+      <h3 style="margin-bottom: 15px; color: #0f172a; text-align: center;">Today's Sales Breakdown</h3>
+      <canvas id="todaySalesChart"></canvas>
+    </div>
+    <div class="chart-card" style="background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); height: 360px; position: relative;">
+      <h3 style="margin-bottom: 15px; color: #0f172a; text-align: center;">Monthly Sales Overview</h3>
+      <canvas id="monthlySalesChart"></canvas>
+    </div>
+  </div>
+</section>

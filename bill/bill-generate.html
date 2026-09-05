@@ -1,0 +1,119 @@
+<!-- Bill Generate Search Section -->
+<section id="bill-generate-section" class="content-section">
+  <h1>Bill Generation</h1>
+  <div class="search-bar-container" style="margin-bottom: 20px;">
+    <input type="text" id="billSearchInput" placeholder="Search by Name or Mobile No..." onkeyup="filterBillCustomers()" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
+  </div>
+  <div class="table-responsive">
+    <table id="bill-customer-table">
+      <thead><tr><th>Name</th><th>Mobile</th><th>Vehicle</th><th>Action</th></tr></thead>
+      <tbody id="bill-customer-tbody"><tr><td colspan="4" class="text-center">Loading...</td></tr></tbody>
+    </table>
+  </div>
+</section>
+
+<!-- Bill Create & Edit Form Page -->
+<section id="bill-create-page" class="content-section hidden">
+  <button class="btn-secondary" onclick="toggleBillViews('search')" style="margin-bottom: 15px;"><i class="fa-solid fa-arrow-left"></i> Back</button>
+  <h2><span id="billCustomerNameTitle" style="color: #2563eb;"></span></h2>
+  
+  <!-- Hidden fields for updating records -->
+  <input type="hidden" id="activeBillCustId" value="">
+  <input type="hidden" id="activeBillId" value="">
+  
+  <div class="form-card" style="margin-top: 15px;">
+    <h3>Bill Details</h3>
+    <div class="form-grid">
+      <div class="form-group"><label>Vehicle Category</label><input type="text" id="billItem" readonly style="background: #e2e8f0;"></div>
+      <div class="form-group"><label>Company Name</label><input type="text" id="billCompany" placeholder="e.g. YAKUZA"></div>
+      <div class="form-group"><label>Model</label><input type="text" id="billModel" placeholder="e.g. CHERRY"></div>
+      <div class="form-group"><label>HSN</label><input type="text" id="billHsn" placeholder="e.g. 87116020"></div>
+      <div class="form-group"><label>Chassis No</label><input type="text" id="billChassis"></div>
+      <div class="form-group"><label>Engine No</label><input type="text" id="billEngine"></div>
+      <div class="form-group"><label>Quantity (PCS)</label><input type="number" id="billQnty" value="1" oninput="calculateBillAmounts()"></div>
+      <div class="form-group"><label>Rate (₹)</label><input type="number" id="billRate" placeholder="0.00" oninput="calculateBillAmounts()"></div>
+      <div class="form-group"><label>Amount (₹)</label><input type="number" id="billAmount" readonly style="background: #e2e8f0;"></div>
+      <div class="form-group"><label>SGST (%)</label><input type="number" id="billSgst" placeholder="0" oninput="calculateBillAmounts()"></div>
+      <div class="form-group"><label>CGST (%)</label><input type="number" id="billCgst" placeholder="0" oninput="calculateBillAmounts()"></div>
+      <div class="form-group"><label>IGST (%)</label><input type="number" id="billIgst" placeholder="0" oninput="calculateBillAmounts()"></div>
+      <div class="form-group"><label>Total Amount (₹)</label><input type="number" id="billTotal" readonly style="background: #e2e8f0; font-weight: bold; color: #0f172a;"></div>
+      <div class="form-group"><label>Battery Details</label><input type="text" id="billBattery" placeholder="e.g. GRAPHENE 60V 32AH"></div>
+      <div class="form-group"><label>Battery Warranty</label><input type="text" id="billWarranty" placeholder="e.g. 1 YEAR WARRANTY"></div>
+      
+      <div class="form-group"><label>Bank Name</label>
+        <div class="select-with-btn">
+          <select id="billBankSelect" onchange="handleBankSelection(this)">
+            <option value="">Select Bank</option>
+            <option value="State Bank of India">State Bank of India</option>
+            <option value="HDFC Bank">HDFC Bank</option>
+          </select>
+          <!-- Bank Add, Edit, Delete Buttons -->
+          <button type="button" class="btn-small bg-blue" onclick="promptAddNewBank()" title="Add Bank"><i class="fa-solid fa-plus"></i></button>
+          <button type="button" class="btn-small bg-yellow" onclick="editSelectedBank()" title="Edit Bank"><i class="fa-solid fa-pen" style="color:#000;"></i></button>
+          <button type="button" class="btn-small bg-red" onclick="deleteSelectedBank()" title="Delete Bank"><i class="fa-solid fa-trash"></i></button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <button type="button" id="save-bill-btn" class="btn-primary bg-green" onclick="saveBillToDatabase()"><i class="fa-solid fa-floppy-disk"></i> Save Bill to Database</button>
+    <button type="button" id="print-bill-btn" class="btn-print hidden" onclick="printGeneratedBill()"><i class="fa-solid fa-print"></i> Print / Save PDF</button>
+  </div>
+</section>
+
+<!-- Bank Details Popup Modal -->
+<div id="bank-modal" class="modal-overlay hidden">
+  <div class="modal-content">
+    <div class="modal-header"><h3 id="bankModalTitle">Bank Details</h3><span class="close-modal" onclick="closeBankModal()">&times;</span></div>
+    <div class="modal-body">
+      <div class="form-group" style="margin-bottom: 10px;"><label>IFSC Code</label><input type="text" id="bankIfsc" oninput="preventRefreshInput(this)"></div>
+      <div class="form-group" style="margin-bottom: 10px;"><label>A/C Holder Name</label><input type="text" id="bankAccName" oninput="preventRefreshInput(this)"></div>
+      <div class="form-group" style="margin-bottom: 10px;"><label>A/C Number</label><input type="text" id="bankAccNo" oninput="preventRefreshInput(this)"></div>
+      <div class="form-group" style="margin-bottom: 10px;"><label>Branch</label><input type="text" id="bankBranch" oninput="preventRefreshInput(this)"></div>
+    </div>
+    <div class="modal-footer"><button type="button" class="btn-primary" onclick="closeBankModal()">Done</button></div>
+  </div>
+</div>
+
+<!-- HIDDEN INVOICE TEMPLATE (FOR PRINTING) -->
+<div id="printable-invoice-area" class="hidden">
+  <div class="invoice-box">
+    <div class="inv-header">
+      <h3>DINO ELECTRIC SCOOTY AND CYCLE SHOP</h3>
+      <p>Ghola Bazar, PO - Doltala Ghola, Betberia Dhosa Road, PS - Baruipur, South 24 parganas, West Bengal, 743376 Mobile: 8167649072 Proprietor Name: RUPSAHANA MOLLA</p>
+      <p>Email: dinoelectricscooty@gmail.com</p>
+    </div>
+    <div class="inv-meta">
+      <div><strong>Invoice No.:</strong> <span id="invNo"></span></div>
+      <div><strong>Invoice Date:</strong> <span id="invDate"></span></div>
+    </div>
+    <div class="inv-customer">
+      <p><strong>BILL TO</strong></p>
+      <p><strong>MR/MISS/MRS.</strong> <span id="invCustName"></span></p>
+      <p><strong>Mobile:</strong> <span id="invMobile"></span></p>
+      <p><strong>Address:</strong> <span id="invAddress"></span></p>
+    </div>
+    <table class="inv-table">
+      <thead><tr><th>ITEMS</th><th>HSN</th><th>QTY.</th><th>RATE</th><th>AMOUNT</th></tr></thead>
+      <tbody id="invTableBody"></tbody>
+    </table>
+    <div class="inv-footer-section">
+      <div class="inv-bank">
+        <p><strong>BANK DETAILS</strong></p>
+        <p>Name: <span id="invBankName"></span></p>
+        <p>IFSC Code: <span id="invIfsc"></span></p>
+        <p>Account No: <span id="invAccNo"></span></p>
+        <p>Branch: <span id="invBranch"></span></p>
+      </div>
+      <div class="inv-totals">
+        <div id="taxBreakdownList" style="font-size: 13px; text-align: right; margin-bottom: 5px;"></div>
+        <p style="font-size: 15px; border-top: 1px solid #333; padding-top: 5px;"><strong>Total Amount: ₹<span id="invFinalTotal"></span></strong></p>
+      </div>
+    </div>
+    <div class="inv-in-words" style="margin-top: 15px; font-size: 13px; border-top: 1px dashed #ccc; padding-top: 8px;">
+      <p><strong>Total Amount (In Words):</strong> <span id="invTotalInWords" style="text-transform: capitalize;"></span></p>
+    </div>
+    <div class="inv-sign"><p>AUTHORISED SIGNATORY FOR<br>DINO ELECTRIC CYCLE SHOP</p></div>
+  </div>
+</div>
