@@ -41,7 +41,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   // Default load Dashboard
-  loadPage('dashboard/dashboard.html', 'dashboard');
+  loadPage('Dashboard/dashboard.html', 'dashboard');
   loadCustomers();
 });
 
@@ -327,7 +327,7 @@ function resetForm() {
 }
 
 window.cancelEdit = function() {
-  resetForm(); loadPage('customer/customer-details.html', 'customerDetails', 'all');
+  resetForm(); loadPage('Customer/customer-details.html', 'customerDetails', 'all');
 }
 
 window.promptAddNewOccupation = function() {
@@ -346,7 +346,7 @@ window.editCustomer = function(id) {
   const cust = customerDataList.find(c => c["ID"] == id);
   if (!cust) return;
   
-  loadPage('customer/customer-entry.html', 'customerEntry').then(() => {
+  loadPage('Customer/customer-entry.html', 'customerEntry').then(() => {
     document.getElementById("edit-customer-id").value = cust["ID"];
     document.getElementById("existing-photo-url").value = cust["Photo URL"] || "";
     document.getElementById("customerName").value = cust["Customer Name"] || "";
@@ -448,7 +448,7 @@ async function handleCustomerFormSubmit(e) {
     const result = await res.json();
     if (result.status === "success") {
       alert(editId ? "Customer updated successfully!" : "Customer saved successfully!");
-      resetForm(); loadPage('customer/customer-details.html', 'customerDetails', 'all'); loadCustomers(true); 
+      resetForm(); loadPage('Customer/customer-details.html', 'customerDetails', 'all'); loadCustomers(true); 
     } else alert("Error: " + result.message);
   } catch (err) { alert(err.name === "AbortError" ? "Save timed out. Please check your internet connection and try again." : "Submission failed: " + err.message); }
   finally { clearTimeout(uiRecoveryTimer); submitBtn.disabled = false; submitBtn.innerText = editId ? "Update Customer" : "Save Customer"; }
