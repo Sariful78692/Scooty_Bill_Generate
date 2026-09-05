@@ -314,3 +314,31 @@ th { background-color: #f8fafc; color: #475569; }
     font-weight: bold !important;
   }
 }
+.cust-photo-img {
+  width: 45px;
+  height: 45px;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  z-index: 1;
+  cursor: zoom-in;
+}
+
+.cust-photo-img {
+  width: 45px !important;
+  height: 45px !important;
+  border-radius: 50%;
+  object-fit: cover;
+  cursor: zoom-in;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  position: relative;
+  z-index: 1;
+}
+
+.cust-photo-img:hover {
+  transform: scale(2);
+  transform-origin: center center;
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4);
+  z-index: 9999;
+}

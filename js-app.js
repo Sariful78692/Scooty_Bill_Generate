@@ -403,12 +403,39 @@ window.editCustomer = function(id) {
 
 window.deleteCustomer = async function(id) {
   if (!confirm("Are you sure you want to delete this customer?")) return;
+
   try {
-    const res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete", id }) });
+    const res = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify({
+        action: "delete",
+        id: id
+      })
+    });
+
     const result = await res.json();
-    if (result.status === "success") { alert("Deleted successfully!"); loadCustomers(true); } else alert("Failed to delete.");
-  } catch (err) { alert("Delete failed."); }
-}
+
+    if (result.status === "success") {
+      alert("Customer deleted successfully!");
+
+      // নতুন data load হবে
+      await loadCustomers(true);
+
+      // Customer Details page automatically refresh হবে
+      await loadPage(
+        "Customer/customer-details.html",
+        "customerDetails",
+        currentFilter || "all"
+      );
+    } else {
+      alert("Failed to delete customer.");
+    }
+
+  } catch (err) {
+    console.error("Delete error:", err);
+    alert("Delete failed: " + err.message);
+  }
+};
 
 async function compressImage(file) {
   if (!file.type.startsWith("image/") || file.size < 100000) return file;
@@ -418,63 +445,156 @@ async function compressImage(file) {
   return await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg", 0.75));
 }
 
+// --- DUPLICATE CUSTOMER VALIDATION & SAVE LOGIC ---
 async function handleCustomerFormSubmit(e) {
   e.preventDefault();
-  const maxPhotoSize = 1024 * 1024; // 1 MB
-  const selectedPhoto = document.getElementById("photoInput")?.files[0];
-  if (selectedPhoto && selectedPhoto.size > maxPhotoSize) {
-    showToast("Please upload below 1 MB");
-    document.getElementById("photoInput").value = "";
-    return;
-  }
+
   const submitBtn = document.getElementById("submit-btn");
-  submitBtn.disabled = true; submitBtn.innerText = "Saving...";
-
   const editId = document.getElementById("edit-customer-id").value;
-  let photoBase64 = "", photoName = "", photoMimeType = "";
-  const photoFileInput = document.getElementById("photoInput");
 
-  if (photoFileInput && photoFileInput.files[0]) {
-    const file = await compressImage(photoFileInput.files[0]);
-    photoName = file.name || "customer-photo.jpg"; photoMimeType = file.type || "image/jpeg";
-    photoBase64 = await new Promise(r => { const reader = new FileReader(); reader.onload = () => r(reader.result.split(",")[1]); reader.readAsDataURL(file); });
+  // Gather form values for validation
+  const nameVal = document.getElementById("customerName")?.value.trim() || "";
+  const mobileVal = document.getElementById("mobileNo")?.value.trim() || "";
+  const aadhaarVal = document.getElementById("aadhaarNo")?.value.trim() || "";
+  const vehicleVal = document.getElementById("vehicleSelect")?.value || "";
+  const companyVal = document.getElementById("vehicleCompany")?.value.trim() || "";
+  const modelVal = document.getElementById("vehicleModel")?.value.trim() || "";
+  const chassisVal = document.getElementById("chassisNo")?.value.trim() || "";
+  const engineVal = document.getElementById("engineNo")?.value.trim() || "";
+
+  // Check for duplicate customer if we are creating a new entry
+  if (!editId) {
+    const isDuplicate = customerDataList.find(c => 
+      String(c["Customer Name"] || "").trim().toLowerCase() === nameVal.toLowerCase() &&
+      String(c["Mobile No"] || "").trim() === mobileVal &&
+      String(c["Aadhaar No"] || "").trim() === aadhaarVal &&
+      String(c["Vehicle"] || "").trim().toLowerCase() === vehicleVal.toLowerCase() &&
+      String(c["Vehicle Company"] || "").trim().toLowerCase() === companyVal.toLowerCase() &&
+      String(c["Vehicle Model"] || "").trim().toLowerCase() === modelVal.toLowerCase() &&
+      String(c["Chassis Number"] || "").trim().toLowerCase() === chassisVal.toLowerCase() &&
+      String(c["Engine Number"] || "").trim().toLowerCase() === engineVal.toLowerCase()
+    );
+
+    if (isDuplicate) {
+      alert("This customer is already saved! All details match an existing record.");
+      return;
+    }
   }
 
-  const payload = {
-    action: editId ? "update" : "create", id: editId || null,
-    customerName: document.getElementById("customerName").value.trim(),
-    guardianName: document.getElementById("guardianName").value.trim(),
-    gender: document.getElementById("gender").value,
-    dob: document.getElementById("dob").value,
-    religion: document.getElementById("religion").value.trim(),
-    aadhaarNo: document.getElementById("aadhaarNo").value.trim(),
-    mobileNo: document.getElementById("mobileNo").value.trim(),
-    address: document.getElementById("address").value.trim(),
-    vehicle: document.getElementById("vehicleSelect").value,
-    vehicleCompany: document.getElementById("vehicleCompany")?.value.trim() || "",
-    vehicleModel: document.getElementById("vehicleModel")?.value.trim() || "",
-    chassisNo: document.getElementById("chassisNo").value.trim(),
-    engineNo: document.getElementById("engineNo").value.trim(),
-    occupation: document.getElementById("occupationSelect").value,
-    existingPhotoUrl: document.getElementById("existing-photo-url").value,
-    photoBase64, photoName, photoMimeType
-  };
+  submitBtn.disabled = true;
+  submitBtn.innerText = "Saving...";
 
   let uiRecoveryTimer;
+
   try {
-    uiRecoveryTimer = setTimeout(() => { submitBtn.disabled = false; submitBtn.innerText = "Retry Save"; }, 12000);
+    let photoBase64 = "";
+    let photoName = "";
+    let photoMimeType = "";
+
+    const photoInput = document.getElementById("photoInput");
+
+    if (photoInput && photoInput.files[0]) {
+      const originalFile = photoInput.files[0];
+      const file = await compressImage(originalFile);
+
+      photoName = file.name || originalFile.name || "customer-photo.jpg";
+      photoMimeType = file.type || originalFile.type || "image/jpeg";
+
+      photoBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+
+        reader.onload = () => {
+          const result = String(reader.result);
+          resolve(result.split(",")[1] || "");
+        };
+
+        reader.onerror = () => {
+          reject(new Error("Photo could not be read"));
+        };
+
+        reader.readAsDataURL(file);
+      });
+    }
+
+    const payload = {
+      action: editId ? "update" : "create", 
+      id: editId || null,
+      customerName: nameVal,
+      guardianName: document.getElementById("guardianName")?.value.trim() || "",
+      gender: document.getElementById("gender")?.value || "",
+      dob: document.getElementById("dob")?.value || "",
+      religion: document.getElementById("religion")?.value.trim() || "",
+      aadhaarNo: aadhaarVal,
+      mobileNo: mobileVal,
+      address: document.getElementById("address")?.value.trim() || "",
+      vehicle: vehicleVal,
+      vehicleCompany: companyVal,
+      vehicleModel: modelVal,
+      chassisNo: chassisVal,
+      engineNo: engineVal,
+      occupation: document.getElementById("occupationSelect")?.value || "",
+      existingPhotoUrl: document.getElementById("existing-photo-url")?.value || "",
+      photoBase64, photoName, photoMimeType
+    };
+
+    uiRecoveryTimer = setTimeout(() => {
+      submitBtn.disabled = false;
+      submitBtn.innerText = "Retry Save";
+    }, 12000);
+
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload), signal: controller.signal });
+
+    const response = await fetch(APPS_SCRIPT_URL, {
+      method: "POST",
+      body: JSON.stringify(payload),
+      signal: controller.signal
+    });
+
     clearTimeout(timeoutId);
-    if (!res.ok) throw new Error(`Server returned ${res.status}`);
-    const result = await res.json();
+
+    if (!response.ok) {
+      throw new Error("Server returned " + response.status);
+    }
+
+    const result = await response.json();
+
     if (result.status === "success") {
-      alert(editId ? "Customer updated successfully!" : "Customer saved successfully!");
-      resetForm(); loadPage('Customer/customer-details.html', 'customerDetails', 'all'); loadCustomers(true); 
-    } else alert("Error: " + result.message);
-  } catch (err) { alert(err.name === "AbortError" ? "Save timed out. Please check your internet connection and try again." : "Submission failed: " + err.message); }
-  finally { clearTimeout(uiRecoveryTimer); submitBtn.disabled = false; submitBtn.innerText = editId ? "Update Customer" : "Save Customer"; }
+      alert(editId
+        ? "Customer updated successfully!"
+        : "Customer saved successfully!"
+      );
+
+      resetForm();
+
+      await loadCustomers(true);
+
+      loadPage(
+        "Customer/customer-details.html",
+        "customerDetails",
+        "all"
+      );
+    } else {
+      throw new Error(result.message || "Save failed");
+    }
+
+  } catch (err) {
+    console.error("Customer save error:", err);
+
+    if (err.name === "AbortError") {
+      alert("Save timed out. Please check your internet connection.");
+    } else {
+      alert("Submission failed: " + err.message);
+    }
+
+  } finally {
+    clearTimeout(uiRecoveryTimer);
+
+    submitBtn.disabled = false;
+    submitBtn.innerText = editId
+      ? "Update Customer"
+      : "Save Customer";
+  }
 }
 
 // ---------------- BILL GENERATION & BANK MANAGEMENT ----------------
@@ -498,7 +618,7 @@ function renderBillCustomerTable(list) {
     const tr = document.createElement("tr");
     const custBills = billDataList.filter(b => String(b["Customer ID"]).trim() === String(cust["ID"]).trim());
     
-    let actionBtns = `<button class="btn-primary" onclick="openBillCreatePage('${cust["ID"]}')">Generate</button>`;
+    let actionBtns = `<button class="btn-primary" onclick="openBillCreatePage('${cust["ID"]}')">Bill Generate</button>`;
     
     if (custBills.length > 0) {
       const latestBill = custBills[custBills.length - 1]; 
@@ -545,7 +665,7 @@ window.openBillCreatePage = function(custId) {
   document.getElementById("print-bill-btn").classList.add("hidden");
   
   const saveBtn = document.getElementById("save-bill-btn");
-  saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Bill to Database`;
+  saveBtn.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Bill`;
   
   toggleBillViews('create');
 };
