@@ -195,6 +195,26 @@ th { background-color: #f8fafc; color: #475569; }
     margin: 8mm;
   }
 
+  /* ইনভয়েস টেমপ্লেটটি নরমাল স্ক্রিনে সবসময় লুকিয়ে রাখার জন্য */
+@media screen {
+  #printable-invoice-area {
+    display: none !important;
+  .signature-section {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-end !important;
+  }
+
+  .customer-signature {
+    text-align: left !important;
+  }
+
+  .authorised-signature {
+    text-align: right !important;
+  }
+  }
+}
+
   body {
     background: #fff !important;
     color: #000 !important;
@@ -313,7 +333,7 @@ th { background-color: #f8fafc; color: #475569; }
     font-size: 13px !important;
     font-weight: bold !important;
   }
-}
+
 .cust-photo-img {
   width: 45px;
   height: 45px;
@@ -341,4 +361,51 @@ th { background-color: #f8fafc; color: #475569; }
   transform-origin: center center;
   box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4);
   z-index: 9999;
+}
+
+.signature-section {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 35px;
+  min-height: 55px;
+  font-size: 10px;
+  font-weight: bold;
+}
+
+.customer-signature {
+  position: relative;
+  text-align: left;
+  width: 45%;
+  padding-top: 28px;
+}
+
+.customer-signature::before {
+  content: "";
+  position: absolute;
+  top: 19px;
+  left: -5px;
+  width: 160px;
+  border-top: 1px solid #000;
+}
+
+.authorised-signature {
+  position: relative;
+  text-align: right;
+  width: 45%;
+  padding-top: 28px;
+}
+
+.authorised-signature::before {
+  content: "";
+  position: absolute;
+  top: 18px;
+  right: -5px;
+  width: 180px;
+  border-top: 1px solid #000;
+}
+
+.signature-section p {
+  margin: 0;
 }

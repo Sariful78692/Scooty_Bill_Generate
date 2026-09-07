@@ -97,13 +97,15 @@
       <p><strong>Mobile:</strong> <span id="invMobile"></span></p>
       <p><strong>Address:</strong> <span id="invAddress"></span></p>
     </div>
-    <div class="invoice-car-details"><h4>Details Car</h4><div><strong id="invCarItem"></strong><span>Company: <b id="invCarCompany"></b></span><span>Model: <b id="invCarModel"></b></span><span>Chassis Number: <b id="invCarChassis"></b></span><span>Motor Number: <b id="invCarMotor"></b></span></div></div>
+        <div class="invoice-car-details"><h4>Details Car</h4><div><strong id="invCarItem"></strong><span>Company: <b id="invCarCompany"></b></span><span>Model: <b id="invCarModel"></b></span><span>Chassis Number: <b id="invCarChassis"></b></span><span>Motor Number: <b id="invCarMotor"></b></span></div></div>
     <div class="invoice-battery-details"><h4>Battery & Charger Details</h4><div class="battery-row"><strong>  Battery: <b id="invBattery"></b></strong><span>&nbsp;&nbsp;&nbsp;Battery Serial No: <b id="invBatterySerial"></b></span><span>&nbsp;&nbsp;&nbsp;Warranty: <b id="invWarranty"></b> Year</span></div><br>
     <div class="charger-row"><strong>Charger: <b id="invCharger"></b></strong><span>&nbsp;&nbsp;&nbsp;Charger Serial No: <b id="invChargerSerial"></b></span></div></div>
     <table class="inv-table">
-      <thead><tr><th>ITEMS</th><th>HSN</th><th>QTY.</th><th>RATE</th><th>CGST<br><small id="invCgstRate"></small></th><th>SGST<br><small id="invSgstRate"></small></th><th>IGST<br><small id="invIgstRate"></small></th><th>AMOUNT</th><th>TOTAL AMOUNT</th></tr></thead>
+      <!-- <thead><tr><th>ITEMS</th><th>HSN</th><th>QTY.</th><th>RATE</th><th>CGST<br><small id="invCgstRate"></small></th><th>SGST<br><small id="invSgstRate"></small></th><th>IGST<br><small id="invIgstRate"></small></th><th>AMOUNT</th><th>TOTAL AMOUNT</th></tr></thead> -->
+       <thead><tr><th>ITEMS</th><th>HSN</th><th>QTY.</th><th>RATE</th><th>AMOUNT</th></tr></thead>
       <tbody id="invTableBody"></tbody>
     </table>
+
     <div class="inv-footer-section">
       <div class="inv-bank">
         <p><strong>BANK DETAILS</strong></p>
@@ -121,6 +123,17 @@
       <p><strong>Total Amount (In Words):</strong> <span id="invTotalInWords" style="text-transform: capitalize;"></span></p>
     </div>
     <div class="service-details"><h4>Service Details</h4><div class="service-boxes"><span></span><span></span><span></span><span></span><span></span><span></span></div></div>
-    <div class="inv-sign"><p>AUTHORISED SIGNATORY FOR<br>DINO ELECTRIC CYCLE SHOP</p></div>
+    <div class="signature-section">
+  <div class="customer-signature">
+    <p> CUSTOMER SIGNATURE</p>
+  </div>
+
+  <div class="authorised-signature">
+    <p>
+      AUTHORISED SIGNATORY FOR<br>
+      DINO ELECTRIC CYCLE SHOP
+    </p>
+  </div>
+</div>
   </div>
 </div>
