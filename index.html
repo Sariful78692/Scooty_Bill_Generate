@@ -42,6 +42,19 @@
         <li class="nav-item">
           <a href="#" class="nav-link" onclick="loadPage('report/report.html', 'report')"><i class="fa-solid fa-file-lines"></i> Daily Report</a>
         </li>
+        <!-- Spare Parts -->
+        <li class="nav-item has-submenu">
+  <a href="#" class="nav-link submenu-toggle">
+    <i class="fa-solid fa-gears"></i>
+    <span>Spare Parts</span>
+    <i class="fa-solid fa-chevron-down arrow"></i>
+  </a>
+  <ul class="submenu">
+    <li><a href="#" onclick="renderPartsSection('purchase')">Purchase</a></li>
+    <li><a href="#" onclick="renderPartsSection('sale')">Sale</a></li>
+    <li><a href="#" onclick="renderPartsBalanceReport()">Balance Sheet</a></li>
+  </ul>
+</li>
       </ul>
       <div class="bottom-actions"><a href="#" class="nav-link settings-link" onclick="openSettings()"><i class="fa-solid fa-gear"></i> Settings</a><button class="logout-side" onclick="logout()"><i class="fa-solid fa-right-from-bracket"></i> Logout</button></div>
     </aside>
@@ -50,6 +63,9 @@
       <!-- Pages will load here dynamically -->
     </main>
   </div>
+
+
+  
 
   <script src="js-app.js"></script>
 </body>

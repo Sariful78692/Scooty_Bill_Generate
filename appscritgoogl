@@ -1,0 +1,392 @@
+function doGet(e) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet();
+  var custSheet = ss.getSheets()[0];
+  var billSheet = getOrCreateBillSheet(ss);
+
+  var custData = custSheet.getDataRange().getDisplayValues();
+  var custResult = [];
+
+  if (custData.length > 1) {
+    var custHeaders = custData[0];
+
+    for (var i = 1; i < custData.length; i++) {
+      var custObj = {};
+
+      for (var j = 0; j < custHeaders.length; j++) {
+        custObj[String(custHeaders[j]).trim()] = custData[i][j];
+      }
+
+      custResult.push(custObj);
+    }
+  }
+
+  var billData = billSheet.getDataRange().getDisplayValues();
+  var billResult = [];
+
+  if (billData.length > 1) {
+    var billHeaders = billData[0];
+
+    for (var x = 1; x < billData.length; x++) {
+      var billObj = {};
+
+      for (var y = 0; y < billHeaders.length; y++) {
+        billObj[String(billHeaders[y]).trim()] = billData[x][y];
+      }
+
+      billResult.push(billObj);
+    }
+  }
+
+  return ContentService
+    .createTextOutput(JSON.stringify({
+      customers: custResult,
+      bills: billResult
+    }))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var ss = SpreadsheetApp.getActiveSpreadsheet();
+    var custSheet = ss.getSheets()[0];
+
+    // SAVE BILL
+    if (data.action === "save_bill") {
+      var billSheet = getOrCreateBillSheet(ss);
+      var lastRow = billSheet.getLastRow();
+
+      var nextInvNo = 1;
+
+      if (lastRow > 1) {
+        var lastInv = billSheet.getRange(lastRow, 1).getValue();
+
+        if (lastInv && String(lastInv).startsWith("INV-")) {
+          var numPart = parseInt(String(lastInv).replace("INV-", ""));
+
+          if (!isNaN(numPart)) {
+            nextInvNo = numPart + 1;
+          }
+        } else {
+          nextInvNo = lastRow;
+        }
+      }
+
+      var billId = "INV-" + nextInvNo;
+
+      var formattedDate = Utilities.formatDate(
+        new Date(),
+        "Asia/Kolkata",
+        "dd MMM yyyy"
+      );
+
+      billSheet.appendRow([
+        billId,
+        data.custId,
+        data.customerName,
+        data.item,
+        data.vehicleCompany,
+        data.vehicleModel,
+        data.hsn,
+        data.chassisNo,
+        data.engineNo,
+        data.quantity,
+        data.rate,
+        data.amount,
+        data.sgst,
+        data.cgst,
+        data.igst,
+        data.totalAmount,
+        data.batteryDetails,
+        data.batteryWarranty,
+        data.batterySerialNo,
+        data.charger,
+        data.chargerSerialNo,
+        data.bankName,
+        data.bankIfsc,
+        data.bankAccName,
+        data.bankAccNo,
+        data.bankBranch,
+        formattedDate
+      ]);
+
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: "success",
+          invoiceNo: billId
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+
+    // UPDATE BILL
+    if (data.action === "update_bill") {
+      var billSheet = getOrCreateBillSheet(ss);
+      var rows = billSheet.getDataRange().getValues();
+      var updated = false;
+
+      for (var i = 1; i < rows.length; i++) {
+        if (
+          String(rows[i][0]).trim() ===
+          String(data.billId).trim()
+        ) {
+          // Date column is column 27, index 26
+          var existingDate = rows[i][26];
+
+          billSheet
+            .getRange(i + 1, 1, 1, 27)
+            .setValues([[
+              data.billId,
+              data.custId,
+              data.customerName,
+              data.item,
+              data.vehicleCompany,
+              data.vehicleModel,
+              data.hsn,
+              data.chassisNo,
+              data.engineNo,
+              data.quantity,
+              data.rate,
+              data.amount,
+              data.sgst,
+              data.cgst,
+              data.igst,
+              data.totalAmount,
+              data.batteryDetails,
+              data.batteryWarranty,
+              data.batterySerialNo,
+              data.charger,
+              data.chargerSerialNo,
+              data.bankName,
+              data.bankIfsc,
+              data.bankAccName,
+              data.bankAccNo,
+              data.bankBranch,
+              existingDate
+            ]]);
+
+          updated = true;
+          break;
+        }
+      }
+
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: updated ? "success" : "error"
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+
+    // DELETE BILL
+    if (data.action === "delete_bill") {
+      var billSheet = getOrCreateBillSheet(ss);
+      var rows = billSheet.getDataRange().getValues();
+
+      for (var i = 1; i < rows.length; i++) {
+        if (
+          String(rows[i][0]).trim() ===
+          String(data.billId).trim()
+        ) {
+          billSheet.deleteRow(i + 1);
+
+          return ContentService
+            .createTextOutput(JSON.stringify({
+              status: "success"
+            }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: "error",
+          message: "Bill not found"
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+
+    // CUSTOMER PHOTO
+    var folderId = "1XaP8aP1-jriVeso5l-eNUku4gmcmQxrp";
+    var photoUrl = data.existingPhotoUrl || "";
+
+    if (data.photoBase64 && data.photoName) {
+      var folder = DriveApp.getFolderById(folderId);
+      var decoded = Utilities.base64Decode(data.photoBase64);
+
+      var blob = Utilities.newBlob(
+        decoded,
+        data.photoMimeType,
+        data.photoName
+      );
+
+      var file = folder.createFile(blob);
+
+      file.setSharing(
+        DriveApp.Access.ANYONE_WITH_LINK,
+        DriveApp.Permission.VIEW
+      );
+
+      photoUrl =
+        "https://drive.google.com/uc?export=view&id=" +
+        file.getId();
+    }
+
+
+    // CREATE CUSTOMER
+    if (data.action === "create") {
+      var id = "CUST-" + new Date().getTime();
+
+      custSheet.appendRow([
+        id,
+        data.customerName,
+        data.guardianName,
+        data.gender,
+        data.dob,
+        data.religion,
+        data.aadhaarNo,
+        data.mobileNo,
+        data.address,
+        data.vehicle,
+        data.vehicleCompany,
+        data.vehicleModel,
+        data.chassisNo,
+        data.engineNo,
+        data.occupation,
+        photoUrl
+      ]);
+
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: "success",
+          id: id,
+          photoUrl: photoUrl
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+
+    // UPDATE CUSTOMER
+    if (data.action === "update") {
+      var rows = custSheet.getDataRange().getValues();
+      var updated = false;
+
+      for (var i = 1; i < rows.length; i++) {
+        if (
+          String(rows[i][0]).trim() ===
+          String(data.id).trim()
+        ) {
+          custSheet
+            .getRange(i + 1, 1, 1, 16)
+            .setValues([[
+              data.id,
+              data.customerName,
+              data.guardianName,
+              data.gender,
+              data.dob,
+              data.religion,
+              data.aadhaarNo,
+              data.mobileNo,
+              data.address,
+              data.vehicle,
+              data.vehicleCompany,
+              data.vehicleModel,
+              data.chassisNo,
+              data.engineNo,
+              data.occupation,
+              photoUrl
+            ]]);
+
+          updated = true;
+          break;
+        }
+      }
+
+      return ContentService
+        .createTextOutput(JSON.stringify({
+          status: updated ? "success" : "error",
+          photoUrl: photoUrl
+        }))
+        .setMimeType(ContentService.MimeType.JSON);
+    }
+
+
+    // DELETE CUSTOMER
+    if (data.action === "delete") {
+      var rows = custSheet.getDataRange().getValues();
+
+      for (var i = 1; i < rows.length; i++) {
+        if (
+          String(rows[i][0]).trim() ===
+          String(data.id).trim()
+        ) {
+          custSheet.deleteRow(i + 1);
+
+          return ContentService
+            .createTextOutput(JSON.stringify({
+              status: "success"
+            }))
+            .setMimeType(ContentService.MimeType.JSON);
+        }
+      }
+    }
+
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: "error",
+        message: "Invalid action"
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+
+  } catch (err) {
+    return ContentService
+      .createTextOutput(JSON.stringify({
+        status: "error",
+        message: err.toString()
+      }))
+      .setMimeType(ContentService.MimeType.JSON);
+  }
+}
+
+
+function getOrCreateBillSheet(ss) {
+  var sheet = ss.getSheetByName("Bills");
+
+  if (!sheet) {
+    sheet = ss.insertSheet("Bills");
+
+    sheet.appendRow([
+      "Bill ID",
+      "Customer ID",
+      "Customer Name",
+      "Item",
+      "Vehicle Company",
+      "Vehicle Model",
+      "HSN",
+      "Chassis No",
+      "Engine No",
+      "Quantity",
+      "Rate",
+      "Amount",
+      "SGST",
+      "CGST",
+      "IGST",
+      "Total Amount",
+      "Battery Details",
+      "Battery Warranty",
+      "Battery Serial No",
+      "Charger",
+      "Charger Serial No",
+      "Bank Name",
+      "Bank IFSC",
+      "Bank A/C Name",
+      "Bank A/C No",
+      "Bank Branch",
+      "Date"
+    ]);
+  }
+
+  return sheet;
+}
