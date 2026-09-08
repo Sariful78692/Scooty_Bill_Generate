@@ -886,7 +886,6 @@ window.deleteGeneratedBill = async function(billId) {
   } catch (err) { alert("Error deleting bill."); }
 };
 
-//helper function
 // Helper function to round money values accurately to 2 decimal places
 function roundMoney(value) {
   return Math.round((Number(value) + Number.EPSILON) * 100) / 100;
@@ -994,7 +993,7 @@ function createDynamicTaxHTML(amount, cgstRate, sgstRate, igstRate) {
     html += `<div style="margin: 2px 0;">IGST @ ${igstRate}%: ₹${igstAmount.toFixed(2)}</div>`;
   }
   if (totalGstAmount > 0) {
-    html += `<div style="font-weight: bold; margin-top: 4px;">Gst Amount: ₹${totalGstAmount.toFixed(2)}</div>`;
+    html += `<div style="font-weight: bold; margin-top: 4px;">Total GST Amount: ₹${totalGstAmount.toFixed(2)}</div>`;
   }
   return html;
 }

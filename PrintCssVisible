@@ -1,0 +1,18 @@
+function showInvoiceAndPrint() {
+  const invoice = document.getElementById("printable-invoice-area");
+
+  if (!invoice) {
+    alert("Printable invoice template পাওয়া যায়নি।");
+    return;
+  }
+
+  // Screen-এ invoice দেখাবে না
+  invoice.classList.add("hidden");
+  invoice.style.display = "";
+  invoice.style.visibility = "";
+
+  // শুধু print-এর সময় CSS invoice visible করবে
+  setTimeout(function () {
+    window.print();
+  }, 100);
+}

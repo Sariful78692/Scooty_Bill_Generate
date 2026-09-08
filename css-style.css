@@ -86,8 +86,12 @@ th { background-color: #f8fafc; color: #475569; }
 .inv-customer { margin-bottom: 20px; background: #f8fafc; padding: 10px; border-radius: 5px; }
 .inv-customer p { margin: 2px 0; }
 .inv-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-.inv-table th, .inv-table td { border-bottom: 1px solid #ddd; padding: 8px; text-align: left; font-size: 13px; }
+.inv-table th, .inv-table td { border-bottom: 1px solid #ddd; padding-left: 8px;padding-right: 8px; text-align: left; font-size: 13px; }
 .inv-table th { background-color: #f1f5f9; }
+.inv-table th:nth-child(n+2),
+.binv-table td:nth-child(n+2) {
+  text-align: center;
+}
 .inv-footer-section { display: flex; justify-content: space-between; margin-top: 20px; }
 .inv-bank { font-size: 12px; }
 .inv-totals { font-size: 16px; text-align: right; align-self: flex-end; }
