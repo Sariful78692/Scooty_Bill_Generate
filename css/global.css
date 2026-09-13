@@ -1,0 +1,21 @@
+* { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; transition: background-color .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease, transform .2s ease; }
+body { background-color: #f4f6f9; color: #333; overflow-x: hidden; }
+.app-container { display: flex; min-height: 100vh; }
+.main-content { flex: 1; padding: 30px; overflow-y: auto; min-height: calc(100vh - 170px); }
+.content-section h1 { margin-bottom: 20px; font-size: 24px; color: #0f172a; }
+.hidden { display: none !important; }
+.text-center { text-align: center; }
+
+/* Toast Notifications */
+.toast-message { position: fixed; top: 24px; right: 24px; z-index: 9999; background: #b91c1c; color: #fff; padding: 13px 20px; border-radius: 6px; font-weight: 700; box-shadow: 0 5px 18px rgba(0,0,0,.25); transform: translateY(-20px); opacity: 0; transition: all .3s ease; }
+.toast-message.show { transform: translateY(0); opacity: 1; }
+
+/* Global Animations */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+
+/* Responsive adjustments for global layout */
+@media (max-width: 760px) {
+  .app-container { display: block; }
+  .main-content { padding: 16px 12px; }
+}

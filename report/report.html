@@ -6,9 +6,20 @@
       <label>From Date</label>
       <input type="date" id="reportFromDate" onchange="generateReport()" style="padding: 10px; border-radius: 5px; border: 1px solid #cbd5e1; width: 100%;">
     </div>
-    <div class="form-group" style="flex: 1; max-width: 250px;"><label>To Date</label><input type="date" id="reportToDate" onchange="generateReport()" style="padding: 10px; border-radius: 5px; border: 1px solid #cbd5e1; width: 100%;"></div>
-    <select id="reportPageSize" onchange="generateReport()" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px;"><option value="all">Display All</option><option value="50">Display 50</option><option value="100">Display 100</option></select>
-    <button class="btn-primary bg-blue" id="reportSearchButton" type="button"><i class="fa-solid fa-filter"></i> Search Report</button>
+    <div class="form-group" style="flex: 1; max-width: 250px;">
+      <label>To Date</label>
+      <input type="date" id="reportToDate" onchange="generateReport()" style="padding: 10px; border-radius: 5px; border: 1px solid #cbd5e1; width: 100%;">
+    </div>
+    <select id="reportPageSize" onchange="generateReport()" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 5px;">
+      <option value="all">Display All</option>
+      <option value="50">Display 50</option>
+      <option value="100">Display 100</option>
+    </select>
+     <button class="btn-primary bg-blue" id="reportSearchButton" type="button"><i class="fa-solid fa-filter"></i> Search Report</button>
+       <div class="form-group">
+  <label>Search Name/Mobile</label>
+  <input type="text" id="reportSearchText" placeholder="Customer Name or Mobile No..." oninput="generateReport()" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
+</div>
   </div>
   
   <div class="table-responsive">
@@ -20,11 +31,11 @@
           <th>Vehicle Details</th>
           <th>Model No</th>
           <th>Amount (₹)</th>
-
+          <th>Actions</th> <!-- Actions Column Added -->
         </tr>
       </thead>
       <tbody id="report-table-body">
-        <tr><td colspan="5" class="text-center">Select a date to view report...</td></tr>
+        <tr><td colspan="6" class="text-center">Select a date to view report...</td></tr>
       </tbody>
     </table>
   </div>

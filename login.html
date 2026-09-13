@@ -1,6 +1,67 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Dino Scooty Login</title><link rel="stylesheet" href="css-style.css"></head>
-<body class="login-body"><main class="login-page"><div class="login-layout">
-<div class="login-card"><h1 class="card-brand-title">DINO ELECTRIC SCOOTY</h1><div class="login-logo">🛵</div><form id="login-form"><input id="login-username" type="text" placeholder="Username" required><input id="login-password" type="password" placeholder="Password" required><button type="submit" class="btn-primary">Login</button></form><div class="login-links"><button type="button" onclick="forgotUsername()">Forgot Username?</button><button type="button" onclick="forgotPassword()">Forgot Password?</button></div><p id="login-message" class="login-message"></p></div>
-<div class="login-image-panel"><img src="assets/scooty.svg" class="login-scooty-outside" alt="Dino Electric Scooty"><p>Electric mobility made simple</p></div>
-</div></main><script src="login.js"></script></body></html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - DINO ELECTRIC SCOOTY</title>
+
+  <!-- FontAwesome for Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Main CSS Link -->
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body class="login-body">
+
+  <div class="login-page" id="login-page">
+    <div class="login-layout">
+
+      <!-- Left Side: Login Form -->
+      <div class="login-card">
+        <div class="login-brand">
+          <i class="fa-solid fa-motorcycle login-logo text-blue"></i>
+          <h1>DINO ELECTRIC</h1>
+          <h2 class="card-brand-title">SCOOTY AND CYCLE SHOP</h2>
+        </div>
+
+        <form id="login-form">
+          <!-- Username with Icon -->
+          <div class="input-with-icon">
+            <i class="fa-solid fa-user"></i>
+            <input type="text" id="login-username" placeholder="Username" required autocomplete="off">
+          </div>
+
+          <!-- Password with Icon + Eye Toggle -->
+          <div class="input-with-icon">
+            <i class="fa-solid fa-lock"></i>
+            <input type="password" id="login-password" placeholder="Password" required>
+            <i class="fa-solid fa-eye toggle-eye" id="toggle-password"></i>
+          </div>
+
+          <div id="login-message" class="login-message"></div>
+
+          <button type="submit" class="btn-primary" style="width: 100%; margin-top: 10px; font-weight: bold;">
+            <i class="fa-solid fa-right-to-bracket" style="margin-right: 5px;"></i> Login
+          </button>
+
+          <div class="login-links">
+            <button type="button" onclick="forgotUsername()">Forgot Username?</button>
+            <button type="button" onclick="forgotPassword()">Forgot Password?</button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Right Side: Graphic/Image -->
+      <div class="login-image-panel">
+        <i class="fa-solid fa-motorcycle scooty-art text-blue"></i>
+        <h1>Welcome Back!</h1>
+        <p>Manage your customers, inventory, and billing efficiently.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Script File for Login Logic -->
+  <script src="js/login.js"></script>
+</body>
+</html>

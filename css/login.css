@@ -1,0 +1,54 @@
+/* ========== LOGIN PAGE STYLES ========== */
+.login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f1f5f9; padding: 25px; box-sizing: border-box; }
+.login-layout { width: min(980px, 100%); display: grid; grid-template-columns: 390px 1fr; align-items: center; gap: 55px; }
+.login-card { width: min(380px, 90%); background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 8px 30px rgba(15,23,42,.12); text-align: center; animation: loginIn .65s cubic-bezier(.2,.8,.2,1) both; margin: 0 auto; }
+.login-card h2 { color: #1d4ed8; margin: 5px 0 0; }
+
+.login-brand { text-align: center; margin-bottom: 18px; }
+.login-brand h1 { margin: 5px 0 0; color: #1d4ed8; font-size: 24px; letter-spacing: .5px; }
+.login-logo { font-size: 42px; margin-bottom: 5px; display: inline-block; color: #2563eb; animation: pulseLogo 2.5s ease-in-out infinite; }
+.card-brand-title { color: #1d4ed8; font-size: 18px; line-height: 1.2; margin: 0 0 10px; letter-spacing: .3px; }
+
+/* Input with icon (username/password) */
+.input-with-icon { position: relative; width: 100%; margin: 12px 0; }
+.input-with-icon i:not(.toggle-eye) { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 16px; transition: color 0.3s ease; z-index: 2; pointer-events: none; }
+.login-card .input-with-icon input { display: block; width: 100%; box-sizing: border-box; margin: 0; padding: 12px 40px 12px 42px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.login-card .input-with-icon input:hover { transform: translateY(-3px); border-color: #60a5fa; box-shadow: 0 7px 16px rgba(37,99,235,.14); }
+.login-card .input-with-icon input:focus { outline: none; transform: translateY(-3px); border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.16), 0 7px 16px rgba(37,99,235,.14); }
+.input-with-icon:focus-within i:not(.toggle-eye) { color: #2563eb; }
+
+/* Eye toggle icon for password */
+.toggle-eye { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 15px; cursor: pointer; z-index: 2; }
+.toggle-eye:hover { color: #2563eb; }
+
+/* Login button */
+.btn-primary { background: #2563eb; color: #fff; border: 0; border-radius: 6px; padding: 12px; font-size: 15px; cursor: pointer; transition: background .2s ease; }
+.btn-primary:hover { background: #1d4ed8; }
+
+.login-links { display: flex; justify-content: space-between; margin-top: 15px; }
+.login-links button, .account-actions button { border: 0; background: transparent; color: #2563eb; cursor: pointer; }
+.login-message { color: #dc2626; min-height: 20px; }
+.account-actions { padding: 15px; display: grid; gap: 10px; }
+
+.scooty-art { font-size: 82px; line-height: 1.1; margin-bottom: 8px; display: inline-block; color: #2563eb; filter: drop-shadow(0 8px 8px rgba(37,99,235,.2)); }
+
+.login-image-panel { text-align: center; animation: fadeUp .8s ease both; }
+.login-image-panel h1 { color: #1d4ed8; font-size: 28px; margin: 16px 0 4px; font-weight: 800; letter-spacing: 1px; }
+.login-image-panel p { color: #64748b; margin-top: 0; }
+
+.text-blue { color: #2563eb; }
+
+@keyframes loginIn { from { opacity: 0; transform: translateX(-25px) scale(.97); } to { opacity: 1; transform: translateX(0) scale(1); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes floatScooty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+@keyframes pulseLogo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+
+@media (max-width: 760px) {
+  .login-page { min-height: 100dvh; padding: 16px; }
+  .login-layout { width: 100%; grid-template-columns: 1fr; gap: 16px; }
+  .login-image-panel { order: -1; }
+  .login-image-panel h1 { font-size: 21px; margin: 0 0 8px; }
+  .login-card { width: 100%; max-width: 390px; box-sizing: border-box; padding: 22px 18px; margin: 0 auto; }
+  .login-links { gap: 8px; flex-wrap: wrap; }
+  .login-links button { font-size: 12px; }
+}

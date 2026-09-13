@@ -1,0 +1,63 @@
+/* Screen Layout for Invoice (Hidden by default) */
+@media screen {
+  #printable-invoice-area { display: none !important; }
+  .signature-section { display: flex !important; justify-content: space-between !important; align-items: flex-end !important; }
+  .customer-signature { text-align: left !important; }
+  .authorised-signature { text-align: right !important; }
+}
+
+/* Base Invoice Box Design */
+.invoice-box { width: 100%; max-width: 500px; margin: auto; padding: 10px; border: 1px solid #eee; font-size: 12px; line-height: 15px; font-family: 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; background: #fff; }
+.inv-header { text-align: center; border-bottom: 2px solid #333; padding-bottom: 0px; margin-bottom: 5px; }
+.inv-header h3 { margin: 0; color: #0f172a; font-size: 20px; }
+.inv-header p { font-size: 20px; color: #555; margin: 2px 0; }
+.inv-meta { display: flex; justify-content: space-between; margin-bottom: 15px; font-weight: bold; }
+.inv-customer { margin-bottom: 20px; background: #f8fafc; padding: 10px; border-radius: 5px; }
+.inv-customer p { margin: 2px 0; }
+.inv-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+.inv-table th, .inv-table td { border-bottom: 1px solid #ddd; padding-left: 8px; padding-right: 8px; text-align: left; font-size: 13px; }
+.inv-table th { background-color: #f1f5f9; }
+.inv-table th:nth-child(n+2), .inv-table td:nth-child(n+2) { text-align: center; }
+.inv-footer-section { display: flex; justify-content: space-between; margin-top: 20px; }
+.inv-bank { font-size: 12px; }
+.inv-totals { font-size: 16px; text-align: right; align-self: flex-end; }
+.inv-sign { text-align: right; margin-top: 40px; font-size: 12px; font-weight: bold; }
+
+.signature-section { width: 100%; display: flex; justify-content: space-between; align-items: flex-end; margin-top: 35px; min-height: 55px; font-size: 10px; font-weight: bold; }
+.customer-signature { position: relative; text-align: left; width: 45%; padding-top: 28px; }
+.customer-signature::before { content: ""; position: absolute; top: 19px; left: -5px; width: 160px; border-top: 1px solid #000; }
+.authorised-signature { position: relative; text-align: right; width: 45%; padding-top: 28px; }
+.authorised-signature::before { content: ""; position: absolute; top: 18px; right: -5px; width: 180px; border-top: 1px solid #000; }
+.signature-section p { margin: 0; }
+
+/* Actual Printing Instructions */
+@media print {
+  @page { size: A4 portrait; margin: 8mm; }
+  body * { visibility: hidden; }
+  body { background: #fff !important; color: #000 !important; margin: 0 !important; padding: 0 !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  
+  #printable-invoice-area, #printable-invoice-area * { visibility: visible; }
+  #printable-invoice-area { position: absolute; left: 0; top: 0; width: 100%; display: block !important; padding: 0 !important; margin: 0 !important; }
+  
+  .invoice-car-details, .service-details { display: none !important; }
+  
+  .invoice-box { width: 100% !important; max-width: none !important; min-height: 275mm !important; border: 2px solid #000 !important; padding: 20px !important; font-size: 14px !important; line-height: 1.4 !important; box-sizing: border-box !important; display: flex !important; flex-direction: column !important; justify-content: space-between !important; }
+  .inv-header { border-bottom: 2px solid #000 !important; padding-bottom: 8px !important; margin-bottom: 12px !important; }
+  .inv-header h3 { font-size: 24px !important; font-weight: 800 !important; margin-bottom: 6px !important; }
+  .inv-header p { font-size: 12px !important; }
+  .inv-meta { font-size: 14px !important; margin-bottom: 12px !important; }
+  .inv-customer { font-size: 14px !important; padding: 10px !important; margin-bottom: 15px !important; border: 1px solid #cbd5e1 !important; border-radius: 6px !important; }
+  
+  .invoice-battery-details { display: block !important; border: 1.5px solid #000 !important; background-color: #f1f5f9 !important; padding: 10px 14px !important; margin-bottom: 18px !important; border-radius: 6px !important; font-size: 13px !important; }
+  .invoice-battery-details h4 { font-size: 15px !important; font-weight: 700 !important; margin-bottom: 6px !important; border-bottom: 1px dashed #000 !important; padding-bottom: 4px !important; }
+  
+  .inv-table { width: 100% !important; margin-bottom: 20px !important; }
+  .inv-table th { font-size: 12px !important; padding: 10px 6px !important; background-color: #e2e8f0 !important; border-bottom: 2px solid #000 !important; }
+  .inv-table td { font-size: 13px !important; padding: 10px 6px !important; border-bottom: 1px solid #cbd5e1 !important; }
+  .inv-table td small { font-size: 11px !important; }
+  
+  .inv-footer-section { margin-top: auto !important; padding-top: 15px !important; }
+  .inv-bank { font-size: 13px !important; }
+  .inv-totals { font-size: 16px !important; font-weight: bold !important; }
+  .inv-sign { margin-top: 40px !important; font-size: 13px !important; font-weight: bold !important; }
+}

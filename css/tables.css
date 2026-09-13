@@ -1,0 +1,18 @@
+.table-responsive { background: white; padding: 20px; border-radius: 8px; overflow-x: auto; box-shadow: 0 2px 5px rgba(0,0,0,0.05); animation: fadeUp .5s ease both; }
+table { width: 100%; border-collapse: collapse; }
+th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; font-size: 14px; }
+th { background-color: #f8fafc; color: #475569; }
+.table-responsive tbody tr:hover { background: #eff6ff; transform: scale(1.005); }
+.badge { background-color: #e0f2fe; color: #0369a1; padding: 4px 8px; border-radius: 4px; font-size: 12px; font-weight: 600; }
+
+.action-btns { display: flex; gap: 5px; align-items: center; }
+.btn-edit { background-color: #eab308; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; }
+.btn-delete { background-color: #ef4444; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; }
+
+/* Customer Photo Zoom Effect */
+.cust-photo-img { width: 45px !important; height: 45px !important; border-radius: 50%; object-fit: cover; cursor: zoom-in; transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; z-index: 1; }
+.cust-photo-img:hover { transform: scale(2); transform-origin: center center; box-shadow: 0 5px 10px rgba(0, 0, 0, 0.4); z-index: 9999; }
+
+@media (max-width: 760px) {
+  table { min-width: 620px; }
+}
