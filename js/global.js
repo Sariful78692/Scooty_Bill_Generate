@@ -13,8 +13,8 @@ let currentFilter = "all";
 // Hash-based routing map
 const ROUTES = {
   "dashboard": { url: "Dashboard/dashboard.html", context: "dashboard" },
-  "customer-entry": { url: "customer/customer-entry.html", context: "customerEntry" },
-  "customer-details": { url: "customer/customer-details.html", context: "customerDetails" },
+  "customer-entry": { url: "Customer/customer-entry.html", context: "customerEntry" },
+  "customer-details": { url: "Customer/customer-details.html", context: "customerDetails" },
   "bill-generate": { url: "bill/bill-generate.html", context: "billGenerate" },
   "report": { url: "report/report.html", context: "report" }
 };
