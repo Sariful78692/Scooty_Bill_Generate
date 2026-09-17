@@ -33,3 +33,28 @@
   .stat-title { font-size: 12px; }
   .stat-value { font-size: 22px; }
 }
+
+/* ==========================================
+   Dashboard Card & Icon Hover Animations
+========================================== */
+.card, .stat-card {
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    border-radius: 12px; /* মডার্ন রাউন্ডেড কর্নার */
+}
+
+/* মাউস হোভার করলে কার্ড একটু উপরে উঠবে এবং শ্যাডো বাড়বে */
+.card:hover, .stat-card:hover {
+    transform: translateY(-8px) !important;
+    box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* কার্ডের ভেতরের আইকনের ট্রানজিশন */
+.card i, .stat-card i, .icon-wrapper i {
+    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) !important;
+}
+
+/* কার্ডে মাউস রাখলে আইকনটি পপ-আপ হয়ে একটু ঘুরবে */
+.card:hover i, .stat-card:hover i, .card:hover .icon-wrapper i {
+    transform: scale(1.3) rotate(15deg) !important;
+    color: #0ea5e9; /* হোভার করলে আইকনের কালার হালকা গ্লো করবে */
+}
