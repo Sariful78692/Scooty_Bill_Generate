@@ -38,21 +38,21 @@
       
       <ul class="nav-menu">
         <li class="nav-item">
-          <a href="#dashboard" class="nav-link active" onclick="if(typeof showSection === 'function') showSection('dashboard-section'); loadPage('dashboard/dashboard.html', 'dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+          <a href="#dashboard" class="nav-link active" onclick="if(typeof showSection === 'function') showSection('dashboard-section'); loadPage('Dashboard/dashboard.html', 'dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
         </li>
         <li class="nav-item has-submenu">
           <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-users"></i> Customer Info <i class="fa-solid fa-chevron-down arrow"></i></a>
           <ul class="submenu">
-            <li><a href="#customerEntry" onclick="loadPage('customer/customer-entry.html', 'customerEntry')">Customer Entry</a></li>
-            <li><a href="#customerDetails" onclick="loadPage('customer/customer-details.html', 'customerDetails', 'all')">Customer Details</a></li>
+            <li><a href="#customerEntry" onclick="loadPage('Customer/customer-entry.html', 'customerEntry')">Customer Entry</a></li>
+            <li><a href="#customerDetails" onclick="loadPage('Customer/customer-details.html', 'customerDetails', 'all')">Customer Details</a></li>
           </ul>
         </li>
         <li class="nav-item has-submenu">
           <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-motorcycle"></i> Vehicle <i class="fa-solid fa-chevron-down arrow"></i></a>
           <ul class="submenu" id="vehicle-submenu-list">
-            <li><a href="#customerDetails-Scooty" onclick="loadPage('customer/customer-details.html', 'customerDetails', 'Scooty')">Scooty</a></li>
-            <li><a href="#customerDetails-Bike" onclick="loadPage('customer/customer-details.html', 'customerDetails', 'Bike')">Bike</a></li>
-            <li><a href="#customerDetails-Cycle" onclick="loadPage('customer/customer-details.html', 'customerDetails', 'Cycle')">Cycle</a></li>
+            <li><a href="#customerDetails-Scooty" onclick="loadPage('Customer/customer-details.html', 'customerDetails', 'Scooty')">Scooty</a></li>
+            <li><a href="#customerDetails-Bike" onclick="loadPage('Customer/customer-details.html', 'customerDetails', 'Bike')">Bike</a></li>
+            <li><a href="#customerDetails-Cycle" onclick="loadPage('Customer/customer-details.html', 'customerDetails', 'Cycle')">Cycle</a></li>
           </ul>
         </li>
         <li class="nav-item">
@@ -201,15 +201,15 @@
 
       // ২. লিংকের নাম অনুযায়ী সঠিক পেজ লোড করা
       if (hash === '#customerEntry') {
-        loadPage('customer/customer-entry.html', 'customerEntry');
+        loadPage('Customer/customer-entry.html', 'customerEntry');
       } else if (hash === '#customerDetails') {
-        loadPage('customer/customer-details.html', 'customerDetails', 'all');
+        loadPage('Customer/customer-details.html', 'customerDetails', 'all');
       } else if (hash === '#customerDetails-Scooty') {
-        loadPage('customer/customer-details.html', 'customerDetails', 'Scooty');
+        loadPage('Customer/customer-details.html', 'customerDetails', 'Scooty');
       } else if (hash === '#customerDetails-Bike') {
-        loadPage('customer/customer-details.html', 'customerDetails', 'Bike');
+        loadPage('Customer/customer-details.html', 'customerDetails', 'Bike');
       } else if (hash === '#customerDetails-Cycle') {
-        loadPage('customer/customer-details.html', 'customerDetails', 'Cycle');
+        loadPage('Customer/customer-details.html', 'customerDetails', 'Cycle');
       } else if (hash === '#billGenerate') {
         loadPage('bill/bill-generate.html', 'billGenerate');
       } else if (hash === '#report') {
@@ -223,7 +223,7 @@
       } else {
         // ড্যাশবোর্ড (Default)
         if (typeof showSection === 'function') showSection('dashboard-section'); 
-        loadPage('dashboard/dashboard.html', 'dashboard');
+        loadPage('Dashboard/dashboard.html', 'dashboard');
       }
     }
 
