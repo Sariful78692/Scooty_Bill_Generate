@@ -184,46 +184,65 @@
 
 
   <script>
-    // এই স্ক্রিপ্টটি শুধু তখনই কাজ করবে যখন কেউ লিংকে রাইট-ক্লিক করে "New Tab" এ ওপেন করবে
-    window.addEventListener('load', () => {
-      const hash = window.location.hash;
-      
-      if (hash && hash !== '#dashboard') {
-        let checkCount = 0;
-        
-        // ডেটাবেস থেকে ডেটা আসা পর্যন্ত অপেক্ষা করবে 
-        const waitForData = setInterval(() => {
-          checkCount++;
-          if ((typeof customerDataList !== 'undefined' && customerDataList.length > 0) || checkCount > 20) {
-            clearInterval(waitForData);
-            
-            // নির্দিষ্ট পেজটি কল করবে
-            if (hash === '#customerEntry') loadPage('customer/customer-entry.html', 'customerEntry');
-            else if (hash === '#customerDetails') loadPage('customer/customer-details.html', 'customerDetails', 'all');
-            else if (hash === '#customerDetails-Scooty') loadPage('customer/customer-details.html', 'customerDetails', 'Scooty');
-            else if (hash === '#customerDetails-Bike') loadPage('customer/customer-details.html', 'customerDetails', 'Bike');
-            else if (hash === '#customerDetails-Cycle') loadPage('customer/customer-details.html', 'customerDetails', 'Cycle');
-            else if (hash === '#billGenerate') loadPage('bill/bill-generate.html', 'billGenerate');
-            else if (hash === '#report') loadPage('report/report.html', 'report');
-            else if (hash === '#spareParts-purchase') { if(typeof renderPartsSection === 'function') renderPartsSection('purchase'); }
-            else if (hash === '#spareParts-sale') { if(typeof renderPartsSection === 'function') renderPartsSection('sale'); }
-            else if (hash === '#spareParts-balance') { if(typeof renderPartsBalanceReport === 'function') renderPartsBalanceReport(); }
+    function navigateToHash() {
+      const hash = window.location.hash || '#dashboard';
 
-            // মেনুর ডিজাইন (Active class) ঠিক করবে
-            document.querySelectorAll('.nav-link, .submenu a').forEach(el => el.classList.remove('active'));
-            const activeLink = document.querySelector(`a[href="${hash}"]`);
-            if (activeLink) {
-               activeLink.classList.add('active');
-               const parentSubmenu = activeLink.closest('.submenu');
-               if(parentSubmenu) {
-                  parentSubmenu.style.display = 'block';
-                  if(parentSubmenu.previousElementSibling) parentSubmenu.previousElementSibling.classList.add('active');
-               }
-            }
-          }
-        }, 200);
+      // ১. মেনুর সিলেকশন স্টাইল (Active Class) আপডেট করা
+      document.querySelectorAll('.nav-link, .submenu a').forEach(el => el.classList.remove('active'));
+      const activeLink = document.querySelector(`a[href="${hash}"]`);
+      if (activeLink) {
+         activeLink.classList.add('active');
+         const parentSubmenu = activeLink.closest('.submenu');
+         if(parentSubmenu) {
+            parentSubmenu.style.display = 'block';
+            if(parentSubmenu.previousElementSibling) parentSubmenu.previousElementSibling.classList.add('active');
+         }
       }
+
+      // ২. লিংকের নাম অনুযায়ী সঠিক পেজ লোড করা
+      if (hash === '#customerEntry') {
+        loadPage('customer/customer-entry.html', 'customerEntry');
+      } else if (hash === '#customerDetails') {
+        loadPage('customer/customer-details.html', 'customerDetails', 'all');
+      } else if (hash === '#customerDetails-Scooty') {
+        loadPage('customer/customer-details.html', 'customerDetails', 'Scooty');
+      } else if (hash === '#customerDetails-Bike') {
+        loadPage('customer/customer-details.html', 'customerDetails', 'Bike');
+      } else if (hash === '#customerDetails-Cycle') {
+        loadPage('customer/customer-details.html', 'customerDetails', 'Cycle');
+      } else if (hash === '#billGenerate') {
+        loadPage('bill/bill-generate.html', 'billGenerate');
+      } else if (hash === '#report') {
+        loadPage('report/report.html', 'report');
+      } else if (hash === '#spareParts-purchase') {
+        if (typeof renderPartsSection === 'function') renderPartsSection('purchase');
+      } else if (hash === '#spareParts-sale') {
+        if (typeof renderPartsSection === 'function') renderPartsSection('sale');
+      } else if (hash === '#spareParts-balance') {
+        if (typeof renderPartsBalanceReport === 'function') renderPartsBalanceReport();
+      } else {
+        // ড্যাশবোর্ড (Default)
+        if (typeof showSection === 'function') showSection('dashboard-section'); 
+        loadPage('dashboard/dashboard.html', 'dashboard');
+      }
+    }
+
+    // NEW TAB DATA FIX: ডেটাবেস থেকে ডেটা লোড হওয়া পর্যন্ত অপেক্ষা করবে
+    window.addEventListener('load', () => {
+      let checkCount = 0;
+      
+      const waitForData = setInterval(() => {
+        checkCount++;
+        // চেক করবে customerDataList এ ডেটা এসেছে কি না (অথবা ৫ সেকেন্ড পার হয়ে গেলে জোর করে লোড করবে)
+        if ((typeof customerDataList !== 'undefined' && customerDataList.length > 0) || checkCount > 25) {
+          clearInterval(waitForData);
+          navigateToHash(); // ডেটা আসার পর পেজ রেন্ডার করবে
+        }
+      }, 200); // প্রতি ২০০ মিলি-সেকেন্ড পরপর চেক করবে
     });
+
+    // মেনুতে ক্লিক করলে বা ব্রাউজারের Back/Forward বাটন চাপলে কাজ করবে
+    window.addEventListener('hashchange', navigateToHash);
   </script>
 
 </body>
