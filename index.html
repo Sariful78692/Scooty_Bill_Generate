@@ -38,35 +38,35 @@
       
       <ul class="nav-menu">
         <li class="nav-item">
-          <a href="#dashboard" class="nav-link active" onclick="if(typeof showSection === 'function') showSection('dashboard-section'); loadPage('Dashboard/dashboard.html', 'dashboard')"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+          <a href="#dashboard" class="nav-link active"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
         </li>
         <li class="nav-item has-submenu">
           <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-users"></i> Customer Info <i class="fa-solid fa-chevron-down arrow"></i></a>
           <ul class="submenu">
-            <li><a href="#customerEntry" onclick="loadPage('Customer/customer-entry.html', 'customerEntry')">Customer Entry</a></li>
-            <li><a href="#customerDetails" onclick="loadPage('Customer/customer-details.html', 'customerDetails', 'all')">Customer Details</a></li>
+            <li><a href="#customer-entry">Customer Entry</a></li>
+            <li><a href="#customer-details">Customer Details</a></li>
           </ul>
         </li>
         <li class="nav-item has-submenu">
           <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-motorcycle"></i> Vehicle <i class="fa-solid fa-chevron-down arrow"></i></a>
           <ul class="submenu" id="vehicle-submenu-list">
-            <li><a href="#customerDetails-Scooty" onclick="loadPage('Customer/customer-details.html', 'customerDetails', 'Scooty')">Scooty</a></li>
-            <li><a href="#customerDetails-Bike" onclick="loadPage('Customer/customer-details.html', 'customerDetails', 'Bike')">Bike</a></li>
-            <li><a href="#customerDetails-Cycle" onclick="loadPage('Customer/customer-details.html', 'customerDetails', 'Cycle')">Cycle</a></li>
+            <li><a href="#customer-details/Scooty">Scooty</a></li>
+            <li><a href="#customer-details/Bike">Bike</a></li>
+            <li><a href="#customer-details/Cycle">Cycle</a></li>
           </ul>
         </li>
         <li class="nav-item">
-          <a href="#billGenerate" class="nav-link" onclick="loadPage('bill/bill-generate.html', 'billGenerate')"><i class="fa-solid fa-file-invoice-dollar"></i> Bill Generate</a>
+          <a href="#bill-generate" class="nav-link"><i class="fa-solid fa-file-invoice-dollar"></i> Bill Generate</a>
         </li>
         <li class="nav-item">
-          <a href="#report" class="nav-link" onclick="loadPage('report/report.html', 'report')"><i class="fa-solid fa-file-lines"></i> Daily Report</a>
+          <a href="#report" class="nav-link"><i class="fa-solid fa-file-lines"></i> Daily Report</a>
         </li>
         <li class="nav-item has-submenu">
           <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-gears"></i> Spare Parts <i class="fa-solid fa-chevron-down arrow"></i></a>
           <ul class="submenu">
-            <li><a href="#spareParts-purchase" onclick="if(typeof renderPartsSection === 'function') renderPartsSection('purchase')">Purchase Entry</a></li>
-            <li><a href="#spareParts-sale" onclick="if(typeof renderPartsSection === 'function') renderPartsSection('sale')">Sales Entry</a></li>
-            <li><a href="#spareParts-balance" onclick="if(typeof renderPartsBalanceReport === 'function') renderPartsBalanceReport()">Balance Sheet</a></li>
+            <li><a href="#spareParts-purchase">Purchase Entry</a></li>
+            <li><a href="#spareParts-sale">Sales Entry</a></li>
+            <li><a href="#spareParts-balance">Balance Sheet</a></li>
           </ul>
         </li>
       </ul>
@@ -181,69 +181,6 @@
   <script src="js/bill-generate.js"></script>
   <script src="js/report.js"></script>
   <script src="js/spare-parts.js"></script>
-
-
-  <script>
-    function navigateToHash() {
-      const hash = window.location.hash || '#dashboard';
-
-      // ১. মেনুর সিলেকশন স্টাইল (Active Class) আপডেট করা
-      document.querySelectorAll('.nav-link, .submenu a').forEach(el => el.classList.remove('active'));
-      const activeLink = document.querySelector(`a[href="${hash}"]`);
-      if (activeLink) {
-         activeLink.classList.add('active');
-         const parentSubmenu = activeLink.closest('.submenu');
-         if(parentSubmenu) {
-            parentSubmenu.style.display = 'block';
-            if(parentSubmenu.previousElementSibling) parentSubmenu.previousElementSibling.classList.add('active');
-         }
-      }
-
-      // ২. লিংকের নাম অনুযায়ী সঠিক পেজ লোড করা
-      if (hash === '#customerEntry') {
-        loadPage('Customer/customer-entry.html', 'customerEntry');
-      } else if (hash === '#customerDetails') {
-        loadPage('Customer/customer-details.html', 'customerDetails', 'all');
-      } else if (hash === '#customerDetails-Scooty') {
-        loadPage('Customer/customer-details.html', 'customerDetails', 'Scooty');
-      } else if (hash === '#customerDetails-Bike') {
-        loadPage('Customer/customer-details.html', 'customerDetails', 'Bike');
-      } else if (hash === '#customerDetails-Cycle') {
-        loadPage('Customer/customer-details.html', 'customerDetails', 'Cycle');
-      } else if (hash === '#billGenerate') {
-        loadPage('bill/bill-generate.html', 'billGenerate');
-      } else if (hash === '#report') {
-        loadPage('report/report.html', 'report');
-      } else if (hash === '#spareParts-purchase') {
-        if (typeof renderPartsSection === 'function') renderPartsSection('purchase');
-      } else if (hash === '#spareParts-sale') {
-        if (typeof renderPartsSection === 'function') renderPartsSection('sale');
-      } else if (hash === '#spareParts-balance') {
-        if (typeof renderPartsBalanceReport === 'function') renderPartsBalanceReport();
-      } else {
-        // ড্যাশবোর্ড (Default)
-        if (typeof showSection === 'function') showSection('dashboard-section'); 
-        loadPage('Dashboard/dashboard.html', 'dashboard');
-      }
-    }
-
-    // NEW TAB DATA FIX: ডেটাবেস থেকে ডেটা লোড হওয়া পর্যন্ত অপেক্ষা করবে
-    window.addEventListener('load', () => {
-      let checkCount = 0;
-      
-      const waitForData = setInterval(() => {
-        checkCount++;
-        // চেক করবে customerDataList এ ডেটা এসেছে কি না (অথবা ৫ সেকেন্ড পার হয়ে গেলে জোর করে লোড করবে)
-        if ((typeof customerDataList !== 'undefined' && customerDataList.length > 0) || checkCount > 25) {
-          clearInterval(waitForData);
-          navigateToHash(); // ডেটা আসার পর পেজ রেন্ডার করবে
-        }
-      }, 200); // প্রতি ২০০ মিলি-সেকেন্ড পরপর চেক করবে
-    });
-
-    // মেনুতে ক্লিক করলে বা ব্রাউজারের Back/Forward বাটন চাপলে কাজ করবে
-    window.addEventListener('hashchange', navigateToHash);
-  </script>
 
 </body>
 </html>

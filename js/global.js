@@ -94,21 +94,68 @@ document.addEventListener("DOMContentLoaded", function () {
   handleRouteFromHash();
 });
 
-// ✅ URL hash পড়ে সঠিক পেজ লোড করা
+// ✅ URL hash পড়ে সঠিক পেজ লোড করা (Ekমাত্র routing entry point — apps-er sob navigation ekhan diyeই jabe)
 function handleRouteFromHash() {
   const hash = location.hash.replace("#", "");
-  if (!hash) {
-    loadPage('Dashboard/dashboard.html', 'dashboard', 'all', false);
+
+  // ---- Spare Parts (in-place render, no fetch needed) ----
+  if (hash === "spareParts-purchase") {
+    if (typeof renderPartsSection === "function") renderPartsSection("purchase");
+    setActiveNav(hash);
     return;
   }
+  if (hash === "spareParts-sale") {
+    if (typeof renderPartsSection === "function") renderPartsSection("sale");
+    setActiveNav(hash);
+    return;
+  }
+  if (hash === "spareParts-balance") {
+    if (typeof renderPartsBalanceReport === "function") renderPartsBalanceReport();
+    setActiveNav(hash);
+    return;
+  }
+
+  // ---- Empty hash → Dashboard ----
+  if (!hash) {
+    loadPage('Dashboard/dashboard.html', 'dashboard', 'all', false);
+    setActiveNav("dashboard");
+    return;
+  }
+
+  // ---- Normal routes (with optional /filter, e.g. customer-details/Scooty) ----
   const [routeKey, filterPart] = hash.split("/");
   const route = ROUTES[routeKey];
   if (route) {
     loadPage(route.url, route.context, filterPart || 'all', false);
+    setActiveNav(hash);
   } else {
     loadPage('Dashboard/dashboard.html', 'dashboard', 'all', false);
+    setActiveNav("dashboard");
   }
 }
+
+// ✅ Active nav-link highlight + matching submenu open/close (class-based, single source of truth)
+function setActiveNav(hash) {
+  document.querySelectorAll('.nav-link, .submenu a').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.has-submenu').forEach(item => item.classList.remove('open'));
+
+  const activeLink = document.querySelector(`a[href="#${hash}"]`);
+  if (!activeLink) return;
+
+  activeLink.classList.add('active');
+  const parentSubmenu = activeLink.closest('.submenu');
+  if (parentSubmenu) {
+    const parentLi = parentSubmenu.closest('.has-submenu');
+    if (parentLi) {
+      parentLi.classList.add('open');
+      const toggle = parentLi.querySelector('.nav-link');
+      if (toggle) toggle.classList.add('active');
+    }
+  }
+}
+
+// ✅ Ekমাত্র hashchange listener — sob click/URL-change ekhan diye handle hobe
+window.addEventListener("hashchange", handleRouteFromHash);
 
 // ✅ Back/Forward বাটন চাপলে সঠিক পেজ লোড করা
 window.addEventListener("popstate", handleRouteFromHash);
@@ -119,8 +166,12 @@ window.showSection = function(sectionId) {
   if (section) section.classList.remove("hidden");
 };
 
-// Dynamic Page Loader
+// Dynamic Page Loader (with duplicate-call guard)
+let isLoadingPage = false;
+
 window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHash = true) {
+  if (isLoadingPage) return; // race-condition guard: ekই muhurte duibar call block korbe
+  isLoadingPage = true;
   try {
     const response = await fetch(pageUrl);
     const html = await response.text();
@@ -141,7 +192,11 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
         history.pushState(null, "", "#" + hashValue);
       }
     }
-  } catch (error) { console.error("Failed to load page:", error); }
+  } catch (error) {
+    console.error("Failed to load page:", error);
+  } finally {
+    isLoadingPage = false;
+  }
 };
 
 // Data Fetching
