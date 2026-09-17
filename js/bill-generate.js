@@ -59,7 +59,6 @@ window.renderBillCustomerTable = function(list) {
   list.forEach(cust => {
     const tr = document.createElement("tr");
 
-    // ✅ FIX: cust ID ফাঁকা হলে যেন ভুল বিল ম্যাচ না হয়
     const custId = String(cust["ID"] || "").trim();
     const custBills = custId === "" ? [] : billDataList.filter(
       b => String(b["Customer ID"] || "").trim() === custId
@@ -71,10 +70,10 @@ window.renderBillCustomerTable = function(list) {
       const latestBill = custBills[custBills.length - 1]; 
       const latestBillId = String(latestBill["Bill ID"] || "").trim();
       if (latestBillId) {
-  actionBtns += ` <button type="button" class="btn-print" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Print Bill" onclick="handlePrintClick('${custId}')"><i class="fa-solid fa-print"></i></button>`;
-  actionBtns += ` <button type="button" class="btn-edit" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Edit Bill" onclick="editGeneratedBill('${latestBillId}')"><i class="fa-solid fa-pen"></i></button>`;
-  actionBtns += ` <button type="button" class="btn-delete" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Delete Bill" onclick="deleteGeneratedBill('${latestBillId}')"><i class="fa-solid fa-trash"></i></button>`;
-}
+        actionBtns += ` <button type="button" class="btn-print" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Print Bill" onclick="handlePrintClick('${custId}')"><i class="fa-solid fa-print"></i></button>`;
+        actionBtns += ` <button type="button" class="btn-edit" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Edit Bill" onclick="editGeneratedBill('${latestBillId}')"><i class="fa-solid fa-pen"></i></button>`;
+        actionBtns += ` <button type="button" class="btn-delete" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Delete Bill" onclick="deleteGeneratedBill('${latestBillId}')"><i class="fa-solid fa-trash"></i></button>`;
+      }
     }
 
     tr.innerHTML = `
@@ -104,8 +103,23 @@ window.openBillCreatePage = function(custId) {
   document.getElementById("billCustomerNameTitle").innerText = "Create Bill for: " + cust["Customer Name"] + " (" + (cust["Vehicle"] || "") + ")";
   
   document.getElementById("billItem").value = cust["Vehicle"] || "";
-  document.getElementById("billCompany").value = cust["Vehicle Company"] || "";
-  document.getElementById("billModel").value = cust["Vehicle Model"] || "";
+  
+  // ✅ Company Dropdown Setup
+  const compSelect = document.getElementById("billCompany");
+  const cVal = (cust["Vehicle Company"] || "").trim().toUpperCase();
+  if (compSelect) {
+    if (cVal && !Array.from(compSelect.options).some(o => o.value === cVal)) compSelect.add(new Option(cVal, cVal));
+    compSelect.value = cVal;
+  }
+
+  // ✅ Model Dropdown Setup
+  const modelSelect = document.getElementById("billModel");
+  const mVal = (cust["Vehicle Model"] || "").trim().toUpperCase();
+  if (modelSelect) {
+    if (mVal && !Array.from(modelSelect.options).some(o => o.value === mVal)) modelSelect.add(new Option(mVal, mVal));
+    modelSelect.value = mVal;
+  }
+
   document.getElementById("billChassis").value = cust["Chassis Number"] || "";
   document.getElementById("billEngine").value = cust["Engine Number"] || "";
   
@@ -116,6 +130,31 @@ window.openBillCreatePage = function(custId) {
   document.getElementById("print-bill-btn").classList.add("hidden");
   document.getElementById("save-bill-btn").innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Bill`;
   toggleBillViews('create');
+};
+
+// ================= COMPANY & MODEL ADD METHODS (নতুন) =================
+window.promptAddNewCompany = function() {
+  const compName = prompt("Enter New Vehicle Company Name:");
+  if (compName && compName.trim() !== "") {
+    const cleanName = compName.trim().toUpperCase();
+    const sel = document.getElementById("billCompany");
+    if(sel && !Array.from(sel.options).some(o => o.value === cleanName)) {
+      sel.add(new Option(cleanName, cleanName));
+    }
+    if(sel) sel.value = cleanName;
+  }
+};
+
+window.promptAddNewModel = function() {
+  const modelName = prompt("Enter New Vehicle Model Name:");
+  if (modelName && modelName.trim() !== "") {
+    const cleanName = modelName.trim().toUpperCase();
+    const sel = document.getElementById("billModel");
+    if(sel && !Array.from(sel.options).some(o => o.value === cleanName)) {
+      sel.add(new Option(cleanName, cleanName));
+    }
+    if(sel) sel.value = cleanName;
+  }
 };
 
 // Bank Methods
@@ -250,11 +289,9 @@ window.saveBillToDatabase = async function() {
       document.getElementById("invNo").innerText = finalBillId;
       document.getElementById("activeBillId").value = finalBillId;
       
-      // ✅ FIX: শুধুমাত্র নতুন বিল তৈরি হলেই প্রিন্ট বাটন শো করবে
       if (!existingBillId) {
         document.getElementById("print-bill-btn").classList.remove("hidden");
       } else {
-        // আপডেট হওয়ার পর চাইলে ইউজারকে কাস্টমার লিস্টে ফেরত পাঠাতে পারেন
         toggleBillViews('search'); 
       }
 
@@ -262,6 +299,7 @@ window.saveBillToDatabase = async function() {
     } else alert("Failed to save bill.");
   } catch (err) { alert("Error connecting to server."); }
 };
+
 window.editGeneratedBill = function(billId) {
   const bill = billDataList.find(b => String(b["Bill ID"]).trim() === String(billId).trim());
   if (!bill) return;
@@ -272,6 +310,16 @@ window.editGeneratedBill = function(billId) {
   document.getElementById("activeBillId").value = bill["Bill ID"]; 
   document.getElementById("billCustomerNameTitle").innerText = "Edit Bill: " + bill["Customer Name"];
   
+  // ✅ Company Options Setup for Edit
+  const cVal = (bill["Vehicle Company"] || "").trim().toUpperCase();
+  const compSelect = document.getElementById("billCompany");
+  if(compSelect && cVal && !Array.from(compSelect.options).some(o => o.value === cVal)) compSelect.add(new Option(cVal, cVal));
+
+  // ✅ Model Options Setup for Edit
+  const mVal = (bill["Vehicle Model"] || "").trim().toUpperCase();
+  const modelSelect = document.getElementById("billModel");
+  if(modelSelect && mVal && !Array.from(modelSelect.options).some(o => o.value === mVal)) modelSelect.add(new Option(mVal, mVal));
+
   const fields = ["billItem","billCompany","billModel","billHsn","billChassis","billEngine","billQnty","billRate","billAmount","billSgst","billCgst","billIgst","billBattery","billWarranty","billBatterySerial","billCharger","billChargerSerial"];
   const dbFields = ["Item","Vehicle Company","Vehicle Model","HSN","Chassis No","Engine No","Quantity","Rate","Amount","SGST","CGST","IGST","Battery Details","Battery Warranty","Battery Serial No","Charger","Charger Serial No"];
   
@@ -367,7 +415,6 @@ function showInvoiceAndPrint() {
   invoice.classList.remove("hidden");
   invoice.style.display = "block";
   invoice.style.visibility = "visible";
-  // ছোট delay - render নিশ্চিত করার জন্য, দ্রুত প্রিন্ট আসবে
   setTimeout(function() {
     window.print();
     setTimeout(() => {
@@ -377,7 +424,6 @@ function showInvoiceAndPrint() {
   }, 150);
 }
 
-// ================= একবারই ডিফাইন — printGeneratedBill (নতুন বিল ফর্ম থেকে) =================
 window.printGeneratedBill = function () {
   const activeId = document.getElementById("activeBillId").value || document.getElementById("invNo").innerText;
   if (activeId && activeId.trim() !== "") {
@@ -387,7 +433,6 @@ window.printGeneratedBill = function () {
   alert("Please save the bill first before printing.");
 };
 
-// ================= একবারই ডিফাইন — printExistingBill (সব জায়গা থেকে ব্যবহৃত) =================
 window.printExistingBill = function (billId) {
   const cleanId = String(billId || "").trim();
   if (!cleanId) return alert("Invalid Bill ID.");
