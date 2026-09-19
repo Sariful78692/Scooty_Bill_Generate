@@ -98,7 +98,7 @@ window.editCustomer = function(id) {
   const cust = customerDataList.find(c => c["ID"] == id);
   if (!cust) return;
   
-  loadPage('customer/customer-entry.html', 'customerEntry').then(() => {
+  loadPage('Customer/customer-entry.html', 'customerEntry').then(() => {
     // 1. ফর্মে ডেটা বসানো
     document.getElementById("edit-customer-id").value = cust["ID"];
     document.getElementById("existing-photo-url").value = cust["Photo URL"] || "";
@@ -155,7 +155,7 @@ window.deleteCustomer = async function(id) {
     if (result.status === "success") {
       alert("Customer deleted successfully!");
       await loadCustomers(true);
-      await loadPage("customer/customer-details.html", "customerDetails", currentFilter || "all");
+      await loadPage("Customer/customer-details.html", "customerDetails", currentFilter || "all");
     } else alert("Failed to delete customer.");
   } catch (err) { alert("Delete failed: " + err.message); }
 };
