@@ -53,8 +53,10 @@ window.confirmPrintSelectedBill = function() {
 window.renderBillCustomerTable = function(list) {
   const tbody = document.getElementById("bill-customer-tbody");
   if (!tbody) return;
+  const tableHead = document.querySelector("#bill-customer-table thead");
+  if (tableHead) tableHead.innerHTML = `<tr><th>Name</th><th>Mobile</th><th>Vehicle</th><th>Company</th><th>Model</th><th>Action</th></tr>`;
   tbody.innerHTML = "";
-  if(list.length === 0) { tbody.innerHTML = `<tr><td colspan="4" class="text-center">No customers.</td></tr>`; return; }
+  if(list.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="text-center">No customers.</td></tr>`; return; }
   
   list.forEach(cust => {
     const tr = document.createElement("tr");
@@ -63,6 +65,9 @@ window.renderBillCustomerTable = function(list) {
     const custBills = custId === "" ? [] : billDataList.filter(
       b => String(b["Customer ID"] || "").trim() === custId
     );
+    const latestBill = custBills.length ? custBills[custBills.length - 1] : null;
+    const company = latestBill?.["Vehicle Company"] || cust["Vehicle Company"] || "-";
+    const model = latestBill?.["Vehicle Model"] || cust["Vehicle Model"] || "-";
 
     let actionBtns = `<button type="button" class="btn-primary" onclick="openBillCreatePage('${custId}')">Bill Generate</button>`;
     
@@ -80,6 +85,8 @@ window.renderBillCustomerTable = function(list) {
       <td><strong>${cust["Customer Name"] || ""}</strong></td>
       <td>${cust["Mobile No"] || ""}</td>
       <td><span class="badge">${cust["Vehicle"] || ""}</span></td>
+      <td>${company}</td>
+      <td>${model}</td>
       <td style="display:flex; gap:5px;">${actionBtns}</td>
     `;
     tbody.appendChild(tr);

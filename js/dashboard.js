@@ -12,7 +12,7 @@ window.updateDashboardCounts = function() {
   if (document.getElementById("count-bike")) document.getElementById("count-bike").innerText = bike;
   if (document.getElementById("count-cycle")) document.getElementById("count-cycle").innerText = cycle;
 
-  let todaySales = 0, monthSales = 0;
+  let todaySales = 0, monthSales = 0, todayScootySales = 0;
   const d = new Date();
   const tY = d.getFullYear(), tM = d.getMonth(), tD = d.getDate();
 
@@ -37,11 +37,17 @@ window.updateDashboardCounts = function() {
         if (parsedDate.getFullYear() === tY && parsedDate.getMonth() === tM) isMonth = true;
       }
     }
-    if (isToday) todaySales += amt;
+    if (isToday) {
+      todaySales += amt;
+      const cust = customerDataList.find(c => String(c["ID"] || "").trim() === String(b["Customer ID"] || "").trim());
+      const vehicle = String(b["Item"] || cust?.["Vehicle"] || "").trim().toLowerCase();
+      if (vehicle === "scooty") todayScootySales++;
+    }
     if (isMonth) monthSales += amt;
   });
 
   if(document.getElementById("sales-today")) document.getElementById("sales-today").innerText = todaySales.toFixed(2);
+  if(document.getElementById("today-scooty-sales")) document.getElementById("today-scooty-sales").innerText = todayScootySales;
   if(document.getElementById("sales-month")) document.getElementById("sales-month").innerText = monthSales.toFixed(2);
   renderDashboardCharts(scooty, bike, cycle, monthSales);
 };

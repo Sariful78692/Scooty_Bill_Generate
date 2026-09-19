@@ -177,7 +177,8 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
   try {
     let html = pageTemplateCache.get(pageUrl);
     if (!html) {
-      const response = await fetch(pageUrl, { cache: "force-cache" });
+      const cacheUrl = context === "dashboard" ? `${pageUrl}?v=2` : pageUrl;
+      const response = await fetch(cacheUrl, { cache: "no-cache" });
       if (!response.ok) throw new Error(`Page request failed: ${response.status}`);
       html = await response.text();
       pageTemplateCache.set(pageUrl, html);
