@@ -169,14 +169,20 @@ window.showSection = function(sectionId) {
 };
 
 // Dynamic Page Loader (with duplicate-call guard)
-let isLoadingPage = false;
+const pageTemplateCache = new Map();
+let pageLoadRequestId = 0;
 
 window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHash = true) {
-  if (isLoadingPage) return; // race-condition guard: ekই muhurte duibar call block korbe
-  isLoadingPage = true;
+  const requestId = ++pageLoadRequestId;
   try {
-    const response = await fetch(pageUrl);
-    const html = await response.text();
+    let html = pageTemplateCache.get(pageUrl);
+    if (!html) {
+      const response = await fetch(pageUrl, { cache: "force-cache" });
+      if (!response.ok) throw new Error(`Page request failed: ${response.status}`);
+      html = await response.text();
+      pageTemplateCache.set(pageUrl, html);
+    }
+    if (requestId !== pageLoadRequestId) return;
     document.getElementById("app-content").innerHTML = html;
     currentFilter = filterValue;
 
@@ -197,7 +203,6 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
   } catch (error) {
     console.error("Failed to load page:", error);
   } finally {
-    isLoadingPage = false;
   }
 };
 
