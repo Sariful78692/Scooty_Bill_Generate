@@ -62,6 +62,9 @@ window.changeAccount = function() {
 
 document.addEventListener("DOMContentLoaded", function () {
 
+  if (window.__daduMenuInitialized) return;
+  window.__daduMenuInitialized = true;
+
   // ✅ sidebar-এর সব href="#" লিংকের ডিফল্ট hash-reset আচরণ বন্ধ করা
   document.querySelectorAll('.sidebar a[href="#"]').forEach(link => {
     link.addEventListener("click", function(e) {
@@ -149,7 +152,6 @@ function setActiveNav(hash) {
     if (parentLi) {
       parentLi.classList.add('open');
       const toggle = parentLi.querySelector('.nav-link');
-      if (toggle) toggle.classList.add('active');
     }
   }
 }
@@ -181,7 +183,7 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
     if (context === 'dashboard') updateDashboardCounts();
     if (context === 'customerEntry') initCustomerEntryForm();
     if (context === 'customerDetails') filterCustomerView();
-    if (context === 'billGenerate') renderBillCustomerTable([...customerDataList].reverse());
+    if (context === 'billGenerate') { renderBillCustomerTable([...customerDataList].reverse()); if (window.initBillCatalogs) initBillCatalogs(); }
     if (context === 'report') initReportPage();
 
     // ✅ Address bar-এ hash আপডেট করা (শুধু ইউজার ক্লিক করলে, hashchange event থেকে না)

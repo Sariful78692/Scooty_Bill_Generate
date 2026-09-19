@@ -142,6 +142,7 @@ window.promptAddNewCompany = function() {
       sel.add(new Option(cleanName, cleanName));
     }
     if(sel) sel.value = cleanName;
+    saveBillCatalog("companies", cleanName);
   }
 };
 
@@ -154,8 +155,41 @@ window.promptAddNewModel = function() {
       sel.add(new Option(cleanName, cleanName));
     }
     if(sel) sel.value = cleanName;
+    saveBillCatalog("models", cleanName);
   }
 };
+
+function saveBillCatalog(type, value) {
+  const key = "daduBillCatalog_" + type;
+  const values = JSON.parse(localStorage.getItem(key) || "[]");
+  if (!values.includes(value)) values.push(value);
+  localStorage.setItem(key, JSON.stringify(values));
+}
+function loadBillCatalog(type, id) {
+  const sel = document.getElementById(id); if (!sel) return;
+  JSON.parse(localStorage.getItem("daduBillCatalog_" + type) || "[]").forEach(v => { if (!Array.from(sel.options).some(o => o.value === v)) sel.add(new Option(v, v)); });
+}
+function editBillCatalog(type, id, label) {
+  const sel = document.getElementById(id), old = sel?.value;
+  if (!old) return alert("Please select a " + label + " first.");
+  const value = prompt("Edit " + label + " name:", old); if (!value?.trim()) return;
+  const clean = value.trim().toUpperCase(); const option = Array.from(sel.options).find(o => o.value === old);
+  if (option) { option.value = clean; option.text = clean; } sel.value = clean;
+  const values = JSON.parse(localStorage.getItem("daduBillCatalog_" + type) || "[]").filter(v => v !== old);
+  if (!values.includes(clean)) values.push(clean); localStorage.setItem("daduBillCatalog_" + type, JSON.stringify(values));
+}
+function deleteBillCatalog(type, id, label) {
+  const sel = document.getElementById(id), value = sel?.value;
+  if (!value) return alert("Please select a " + label + " first.");
+  if (!confirm("Delete this " + label + "?")) return;
+  Array.from(sel.options).find(o => o.value === value)?.remove(); sel.value = "";
+  localStorage.setItem("daduBillCatalog_" + type, JSON.stringify(JSON.parse(localStorage.getItem("daduBillCatalog_" + type) || "[]").filter(v => v !== value)));
+}
+window.editSelectedCompany = () => editBillCatalog("companies", "billCompany", "company");
+window.deleteSelectedCompany = () => deleteBillCatalog("companies", "billCompany", "company");
+window.editSelectedModel = () => editBillCatalog("models", "billModel", "model");
+window.deleteSelectedModel = () => deleteBillCatalog("models", "billModel", "model");
+window.initBillCatalogs = () => { loadBillCatalog("companies", "billCompany"); loadBillCatalog("models", "billModel"); };
 
 // Bank Methods
 window.promptAddNewBank = function() {

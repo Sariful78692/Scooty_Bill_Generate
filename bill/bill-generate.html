@@ -35,6 +35,8 @@
             <option value="OKINAVA">OKINAVA</option>
           </select>
           <button type="button" class="btn-small bg-blue" onclick="promptAddNewCompany()" title="Add Company"><i class="fa-solid fa-plus"></i></button>
+          <button type="button" class="btn-small bg-yellow" onclick="editSelectedCompany()" title="Edit Company"><i class="fa-solid fa-pen" style="color:#000;"></i></button>
+          <button type="button" class="btn-small bg-red" onclick="deleteSelectedCompany()" title="Delete Company"><i class="fa-solid fa-trash"></i></button>
         </div>
       </div>
 
@@ -48,6 +50,8 @@
             <option value="DUSTER">DUSTER</option>
           </select>
           <button type="button" class="btn-small bg-blue" onclick="promptAddNewModel()" title="Add Model"><i class="fa-solid fa-plus"></i></button>
+          <button type="button" class="btn-small bg-yellow" onclick="editSelectedModel()" title="Edit Model"><i class="fa-solid fa-pen" style="color:#000;"></i></button>
+          <button type="button" class="btn-small bg-red" onclick="deleteSelectedModel()" title="Delete Model"><i class="fa-solid fa-trash"></i></button>
         </div>
       </div>
       <div class="form-group"><label>HSN</label><input type="text" id="billHsn" placeholder="e.g. 87116020"></div>
