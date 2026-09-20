@@ -1,5 +1,5 @@
 // Paste your NEW deployed Google Apps Script Web App URL here!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzLShoct_ttY2y-ee-ql4uHRrXs3Pfv9czBNH0F0YANxQQ1eAuA8tuhsisETWjf1Ili/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz9v0G5rMUd0QLv8u_6lOdo6lVGH-V-E0b8X-tHH32ncQGfBl5F3yptisB85o012qvUEw/exec";
 
 // Global Variables
 let customerDataList = [];
@@ -16,7 +16,8 @@ const ROUTES = {
   "customer-entry": { url: "Customer/customer-entry.html", context: "customerEntry" },
   "customer-details": { url: "Customer/customer-details.html", context: "customerDetails" },
   "bill-generate": { url: "bill/bill-generate.html", context: "billGenerate" },
-  "report": { url: "report/report.html", context: "report" }
+  "report": { url: "report/report.html", context: "report" },
+  "dropdown": { url: "Dropdown/dropdown.html", context: "dropdown" }
 };
 
 // Chart instances
@@ -192,6 +193,7 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
     if (context === 'customerDetails') filterCustomerView();
     if (context === 'billGenerate') { renderBillCustomerTable([...customerDataList].reverse()); if (window.initBillCatalogs) initBillCatalogs(); }
     if (context === 'report') initReportPage();
+    if (context === 'dropdown' && window.refreshDropdownOptions) refreshDropdownOptions();
 
     // ✅ Address bar-এ hash আপডেট করা (শুধু ইউজার ক্লিক করলে, hashchange event থেকে না)
     if (updateHash) {
@@ -216,6 +218,8 @@ window.loadCustomers = async function(forceReload = false) {
     billDataList = data.bills || []; 
     partsPurchaseList = data.purchases || [];
     partsSaleList = data.sales || [];
+    window.dropdownDataList = data.dropdowns || [];
+    if (window.refreshDropdownOptions) window.refreshDropdownOptions();
 
     if (document.getElementById("dashboard-section")) updateDashboardCounts();
     if (document.getElementById("bill-generate-section")) renderBillCustomerTable([...customerDataList].reverse());
@@ -249,9 +253,9 @@ window.parseAmount = function(value) {
   return Number.isFinite(amount) ? amount : 0;
 };
 
-window.showToast = function(message) {
+window.showToast = function(message, type = "success") {
   const toast = document.createElement("div");
-  toast.className = "toast-message";
+  toast.className = "toast-message " + type;
   toast.textContent = message;
   document.body.appendChild(toast);
   setTimeout(() => toast.classList.add("show"), 10);

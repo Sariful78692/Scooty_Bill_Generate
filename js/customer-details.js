@@ -153,7 +153,7 @@ window.deleteCustomer = async function(id) {
     const res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete", id: id }) });
     const result = await res.json();
     if (result.status === "success") {
-      alert("Customer deleted successfully!");
+      showToast("Customer deleted successfully!");
       await loadCustomers(true);
       await loadPage("Customer/customer-details.html", "customerDetails", currentFilter || "all");
     } else alert("Failed to delete customer.");

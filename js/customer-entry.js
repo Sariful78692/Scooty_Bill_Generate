@@ -1,4 +1,5 @@
 window.initCustomerEntryForm = function() {
+  if (window.refreshDropdownOptions) refreshDropdownOptions();
   const form = document.getElementById("customer-form");
   if(form) form.addEventListener("submit", handleCustomerFormSubmit);
   const photoInput = document.getElementById("photoInput");
@@ -130,7 +131,7 @@ window.handleCustomerFormSubmit = async function(e) {
     if (!response.ok) throw new Error("Server returned " + response.status);
     const result = await response.json();
     if (result.status === "success") {
-      alert(editId ? "Customer updated successfully!" : "Customer saved successfully!");
+      showToast(editId ? "Customer updated successfully!" : "Customer saved successfully!");
       resetForm(); await loadCustomers(true); loadPage("Customer/customer-details.html", "customerDetails", "all");
     } else throw new Error(result.message || "Save failed");
   } catch (err) {

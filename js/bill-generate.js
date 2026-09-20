@@ -326,7 +326,7 @@ window.saveBillToDatabase = async function() {
     const result = await res.json();
     if (result.status === "success") {
       const finalBillId = existingBillId || result.invoiceNo;
-      alert(existingBillId ? "Bill Updated Successfully!" : "Bill saved! Invoice No: " + finalBillId);
+      showToast(existingBillId ? "Bill updated successfully!" : "Bill saved! Invoice No: " + finalBillId);
       document.getElementById("invNo").innerText = finalBillId;
       document.getElementById("activeBillId").value = finalBillId;
       
@@ -386,7 +386,7 @@ window.deleteGeneratedBill = async function(billId) {
      const res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete_bill", billId: billId }) });
      const result = await res.json();
      if(result.status === "success"){
-        alert("Bill deleted successfully!");
+        showToast("Bill deleted successfully!");
         await loadCustomers(true);
         if(!document.getElementById("report-section").classList.contains("hidden")) generateReport();
      } else alert("Failed to delete.");

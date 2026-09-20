@@ -8,6 +8,8 @@ body { background-color: #f4f6f9; color: #333; overflow-x: hidden; }
 
 /* Toast Notifications */
 .toast-message { position: fixed; top: 24px; right: 24px; z-index: 9999; background: #b91c1c; color: #fff; padding: 13px 20px; border-radius: 6px; font-weight: 700; box-shadow: 0 5px 18px rgba(0,0,0,.25); transform: translateY(-20px); opacity: 0; transition: all .3s ease; }
+.toast-message.success { background: #16a34a; }
+.toast-message.error { background: #dc2626; }
 .toast-message.show { transform: translateY(0); opacity: 1; }
 
 /* Global Animations */

@@ -2,6 +2,8 @@ function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var custSheet = ss.getSheets()[0];
   var billSheet = getOrCreateBillSheet(ss);
+  var dropdownSheet = getOrCreateSheet(ss, "Dropdown", ["ID", "Type", "Value", "Created At"]);
+  seedDropdownDefaults(dropdownSheet);
 
   var custData = custSheet.getDataRange().getDisplayValues();
   var custResult = [];
@@ -40,7 +42,8 @@ function doGet(e) {
   return ContentService
     .createTextOutput(JSON.stringify({
       customers: custResult,
-      bills: billResult
+      bills: billResult,
+      dropdowns: getDropdownData(dropdownSheet)
     }))
     .setMimeType(ContentService.MimeType.JSON);
 }
@@ -51,6 +54,30 @@ function doPost(e) {
     var data = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var custSheet = ss.getSheets()[0];
+
+    if (data.action === "save_dropdown" || data.action === "update_dropdown" || data.action === "delete_dropdown") {
+      var ds = getOrCreateSheet(ss, "Dropdown", ["ID", "Type", "Value", "Created At"]);
+      var dr = ds.getDataRange().getValues();
+      if (data.action === "save_dropdown") {
+        var value = String(data.value || "").trim();
+        var duplicate = dr.slice(1).some(function(r) { return String(r[1]).toLowerCase() === String(data.type).toLowerCase() && String(r[2]).trim().toLowerCase() === value.toLowerCase(); });
+        if (!value || duplicate) return jsonResponse({status:"error", message: duplicate ? "Value already exists" : "Value is required"});
+        var newId = "DD-" + new Date().getTime();
+        ds.appendRow([newId, data.type, value, new Date()]);
+        return jsonResponse({status:"success", id:newId});
+      }
+      for (var di = 1; di < dr.length; di++) if (String(dr[di][0]).trim() === String(data.id).trim()) {
+        if (data.action === "delete_dropdown") ds.deleteRow(di + 1);
+        else {
+          var newValue = String(data.value || "").trim();
+          var duplicateEdit = dr.slice(1).some(function(r, ri) { return ri !== di - 1 && String(r[1]).toLowerCase() === String(data.type).toLowerCase() && String(r[2]).trim().toLowerCase() === newValue.toLowerCase(); });
+          if (!newValue || duplicateEdit) return jsonResponse({status:"error", message: duplicateEdit ? "This value already exists" : "Value is required"});
+          ds.getRange(di + 1, 2, 1, 2).setValues([[data.type, newValue]]);
+        }
+        return jsonResponse({status:"success"});
+      }
+      return jsonResponse({status:"error", message:"Dropdown record not found"});
+    }
 
     // SAVE BILL
     if (data.action === "save_bill") {
@@ -389,4 +416,30 @@ function getOrCreateBillSheet(ss) {
   }
 
   return sheet;
+}
+
+function getOrCreateSheet(ss, name, headers) {
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) { sheet = ss.insertSheet(name); sheet.appendRow(headers); }
+  return sheet;
+}
+
+function seedDropdownDefaults(sheet) {
+  var defaults = {
+    "Company Name": ["YAKUZA", "KOMAKI", "OKINAVA"],
+    "Model": ["CHERRY", "Y1", "DUSTER"],
+    "Bank Name": ["State Bank of India", "HDFC Bank"]
+  };
+  var rows = sheet.getDataRange().getValues();
+  Object.keys(defaults).forEach(function(type) { defaults[type].forEach(function(value) {
+    var exists = rows.slice(1).some(function(r) { return String(r[1]) === type && String(r[2]).trim().toLowerCase() === value.toLowerCase(); });
+    if (!exists) { sheet.appendRow(["DD-" + new Date().getTime() + "-" + Math.floor(Math.random()*1000), type, value, new Date()]); rows = sheet.getDataRange().getValues(); }
+  }); });
+}
+
+function jsonResponse(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
+function getDropdownData(sheet) {
+  var rows = sheet.getDataRange().getDisplayValues(), out = [];
+  for (var i = 1; i < rows.length; i++) out.push({ID: rows[i][0], Type: rows[i][1], Value: rows[i][2], "Created At": rows[i][3]});
+  return out;
 }

@@ -1,0 +1,9 @@
+<section class="content-section">
+  <h1>Dropdown Management</h1>
+  <div class="form-card"><div class="form-grid">
+    <div class="form-group"><label>Type</label><select id="dropdownType"><option value="Company Name">Company Name</option><option value="Model">Model</option><option value="Bank Name">Bank Name</option><option value="Occupation">Occupation</option></select></div>
+    <div class="form-group"><label>Value</label><input id="dropdownValue" type="text" placeholder="Enter value"></div>
+    <div class="form-actions"><button class="btn-primary" onclick="saveDropdownValue()">Save</button><button class="btn-secondary" onclick="clearDropdownForm()">Clear</button></div>
+  </div></div>
+  <div class="table-responsive"><table><thead><tr><th>Type</th><th>Value</th><th>Actions</th></tr></thead><tbody id="dropdownTableBody"></tbody></table></div>
+</section>

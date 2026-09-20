@@ -63,11 +63,10 @@
           <div class="select-with-btn">
             <select id="occupationSelect" required>
               <option value="">Select Occupation</option>
-              <option value="Labour">Labour</option>
-              <option value="Service">Service</option>
-              <option value="Self Employed">Self Employed</option>
             </select>
-            <button type="button" class="btn-small bg-blue" onclick="promptAddNewOccupation()"><i class="fa-solid fa-plus"></i></button>
+            <button type="button" class="btn-small bg-blue" onclick="promptAddNewOccupation()" title="Add Occupation"><i class="fa-solid fa-plus"></i></button>
+            <button type="button" class="btn-small bg-yellow" onclick="editSelectedOccupation()" title="Edit Occupation"><i class="fa-solid fa-pen" style="color:#000"></i></button>
+            <button type="button" class="btn-small bg-red" onclick="deleteSelectedOccupation()" title="Delete Occupation"><i class="fa-solid fa-trash"></i></button>
           </div>
         </div>
         
