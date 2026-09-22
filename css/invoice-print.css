@@ -61,12 +61,14 @@
   .inv-table td { font-size: 11px !important; padding: 6px 4px !important; border-bottom: 1px solid #cbd5e1 !important; }
   .inv-table td small { font-size: 11px !important; }
   
-  .inv-footer-section { margin-top: auto !important; padding-top: 8px !important; }
+  .inv-footer-section { margin-top: auto !important; margin-bottom: 22px !important; padding-top: 8px !important; }
   .inv-bank { font-size: 11px !important; }
   .inv-totals { font-size: 16px !important; font-weight: bold !important; }
   .inv-sign { margin-top: 15px !important; font-size: 11px !important; font-weight: bold !important; }
-  .invoice-terms { margin-top: 6px !important; font-size: 8px !important; line-height: 10px !important; padding-top: 4px !important; }
+  .invoice-terms { margin-top: 2px !important; font-size: 8px !important; line-height: 10px !important; padding-top: 4px !important; }
   .invoice-terms > p { font-size: 9px !important; margin-bottom: 2px !important; }
   .invoice-terms li { margin: 0 !important; }
-  .signature-section { margin-top: 12px !important; min-height: 42px !important; }
+  .signature-section { margin-top: 38px !important; min-height: 76px !important; padding-top: 18px !important; }
+  .customer-signature, .authorised-signature { padding-top: 34px !important; }
+  .customer-signature::before, .authorised-signature::before { top: 20px !important; }
 }

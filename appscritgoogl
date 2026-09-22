@@ -385,7 +385,7 @@ function getOrCreateBillSheet(ss) {
 
 // Adds new customer columns without changing or rewriting any existing row.
 function ensureCustomerColumns(sheet) {
-  var required = ["ID", "Customer Name", "Guardian Name", "Gender", "DOB", "Religion", "Aadhaar No", "Mobile No", "Address", "District", "PIN Code", "Vehicle", "Vehicle Company", "Vehicle Model", "Chassis Number", "Engine Number", "Occupation", "Photo URL"];
+  var required = ["ID", "Customer Name", "Guardian Name", "Gender", "DOB", "Religion", "Aadhaar No", "Mobile No", "Address", "District", "State", "PIN Code", "Vehicle", "Vehicle Company", "Vehicle Model", "Chassis Number", "Engine Number", "Occupation", "Photo URL"];
   var lastColumn = sheet.getLastColumn();
   if (lastColumn === 0) {
     sheet.getRange(1, 1, 1, required.length).setValues([required]);
@@ -420,7 +420,7 @@ function customerRowValues(sheet, data, id, photoUrl) {
     "ID": id, "Customer Name": data.customerName, "Guardian Name": data.guardianName,
     "Gender": data.gender, "DOB": data.dob, "Religion": data.religion,
     "Aadhaar No": data.aadhaarNo, "Mobile No": data.mobileNo, "Address": data.address,
-    "District": data.district, "PIN Code": data.pin, "Vehicle": data.vehicle,
+    "District": data.district, "State": data.state, "PIN Code": data.pin, "Vehicle": data.vehicle,
     "Vehicle Company": data.vehicleCompany, "Vehicle Model": data.vehicleModel,
     "Chassis Number": data.chassisNo, "Engine Number": data.engineNo,
     "Occupation": data.occupation, "Photo URL": photoUrl

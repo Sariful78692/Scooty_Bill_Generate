@@ -111,6 +111,7 @@ window.editCustomer = function(id) {
     document.getElementById("mobileNo").value = cust["Mobile No"] || "";
     document.getElementById("address").value = cust["Address"] || "";
     if (document.getElementById("district")) document.getElementById("district").value = cust["District"] || "";
+    if (document.getElementById("state")) document.getElementById("state").value = cust["State"] || "West Bengal";
     if (document.getElementById("pin")) document.getElementById("pin").value = cust["PIN Code"] || cust["PIN"] || "";
     document.getElementById("vehicleSelect").value = cust["Vehicle"] || "";
     

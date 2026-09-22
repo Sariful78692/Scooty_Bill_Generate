@@ -117,7 +117,7 @@ window.handleCustomerFormSubmit = async function(e) {
       gender: document.getElementById("gender")?.value || "", dob: document.getElementById("dob")?.value || "",
       religion: document.getElementById("religion")?.value.trim() || "", aadhaarNo: aadhaarVal, mobileNo: mobileVal,
       address: document.getElementById("address")?.value.trim() || "", vehicle: vehicleVal, vehicleCompany: companyVal,
-      district: document.getElementById("district")?.value.trim() || "", pin: document.getElementById("pin")?.value.trim() || "",
+      district: document.getElementById("district")?.value.trim() || "", state: document.getElementById("state")?.value.trim() || "", pin: document.getElementById("pin")?.value.trim() || "",
       vehicleModel: modelVal, chassisNo: chassisVal, engineNo: engineVal,
       occupation: document.getElementById("occupationSelect")?.value || "",
       existingPhotoUrl: document.getElementById("existing-photo-url")?.value || "", photoBase64, photoName, photoMimeType
