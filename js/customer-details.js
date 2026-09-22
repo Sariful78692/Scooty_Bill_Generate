@@ -110,6 +110,8 @@ window.editCustomer = function(id) {
     document.getElementById("aadhaarNo").value = cust["Aadhaar No"] || "";
     document.getElementById("mobileNo").value = cust["Mobile No"] || "";
     document.getElementById("address").value = cust["Address"] || "";
+    if (document.getElementById("district")) document.getElementById("district").value = cust["District"] || "";
+    if (document.getElementById("pin")) document.getElementById("pin").value = cust["PIN Code"] || cust["PIN"] || "";
     document.getElementById("vehicleSelect").value = cust["Vehicle"] || "";
     
     if(document.getElementById("chassisNo")) document.getElementById("chassisNo").value = cust["Chassis Number"] || "";

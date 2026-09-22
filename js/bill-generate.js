@@ -488,6 +488,7 @@ window.printExistingBill = function (billId) {
   setInvoiceText("invCustName", bill["Customer Name"]);
   setInvoiceText("invMobile", customer?.["Mobile No"] || ""); 
   setInvoiceText("invAddress", customer?.["Address"] || "");
+  setInvoiceText("invDistrict", customer?.["District"] || "[DISTRICT NAME]");
   
   const f = ["invCarItem","invCarCompany","invCarModel","invCarChassis","invCarMotor","invBattery","invBatterySerial","invCharger","invChargerSerial","invWarranty"];
   const b = ["Item","Vehicle Company","Vehicle Model","Chassis No","Engine No","Battery Details","Battery Serial No","Charger","Charger Serial No","Battery Warranty"];

@@ -1,6 +1,7 @@
 function doGet(e) {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var custSheet = ss.getSheets()[0];
+  ensureCustomerColumns(custSheet);
   var billSheet = getOrCreateBillSheet(ss);
   var dropdownSheet = getOrCreateSheet(ss, "Dropdown", ["ID", "Type", "Value", "Created At"]);
   seedDropdownDefaults(dropdownSheet);
@@ -54,6 +55,7 @@ function doPost(e) {
     var data = JSON.parse(e.postData.contents);
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var custSheet = ss.getSheets()[0];
+    ensureCustomerColumns(custSheet);
 
     if (data.action === "save_dropdown" || data.action === "update_dropdown" || data.action === "delete_dropdown") {
       var ds = getOrCreateSheet(ss, "Dropdown", ["ID", "Type", "Value", "Created At"]);
@@ -265,25 +267,7 @@ function doPost(e) {
     // CREATE CUSTOMER
     if (data.action === "create") {
       var id = "CUST-" + new Date().getTime();
-
-      custSheet.appendRow([
-        id,
-        data.customerName,
-        data.guardianName,
-        data.gender,
-        data.dob,
-        data.religion,
-        data.aadhaarNo,
-        data.mobileNo,
-        data.address,
-        data.vehicle,
-        data.vehicleCompany,
-        data.vehicleModel,
-        data.chassisNo,
-        data.engineNo,
-        data.occupation,
-        photoUrl
-      ]);
+      appendCustomerByHeaders(custSheet, data, id, photoUrl);
 
       return ContentService
         .createTextOutput(JSON.stringify({
@@ -305,26 +289,7 @@ function doPost(e) {
           String(rows[i][0]).trim() ===
           String(data.id).trim()
         ) {
-          custSheet
-            .getRange(i + 1, 1, 1, 16)
-            .setValues([[
-              data.id,
-              data.customerName,
-              data.guardianName,
-              data.gender,
-              data.dob,
-              data.religion,
-              data.aadhaarNo,
-              data.mobileNo,
-              data.address,
-              data.vehicle,
-              data.vehicleCompany,
-              data.vehicleModel,
-              data.chassisNo,
-              data.engineNo,
-              data.occupation,
-              photoUrl
-            ]]);
+          updateCustomerByHeaders(custSheet, i + 1, data, photoUrl);
 
           updated = true;
           break;
@@ -416,6 +381,60 @@ function getOrCreateBillSheet(ss) {
   }
 
   return sheet;
+}
+
+// Adds new customer columns without changing or rewriting any existing row.
+function ensureCustomerColumns(sheet) {
+  var required = ["ID", "Customer Name", "Guardian Name", "Gender", "DOB", "Religion", "Aadhaar No", "Mobile No", "Address", "District", "PIN Code", "Vehicle", "Vehicle Company", "Vehicle Model", "Chassis Number", "Engine Number", "Occupation", "Photo URL"];
+  var lastColumn = sheet.getLastColumn();
+  if (lastColumn === 0) {
+    sheet.getRange(1, 1, 1, required.length).setValues([required]);
+    return;
+  }
+  var headers = sheet.getRange(1, 1, 1, lastColumn).getDisplayValues()[0].map(function(h) { return String(h).trim(); });
+  // Rename the old PIN header without touching its existing values.
+  var oldPinIndex = headers.indexOf("PIN");
+  if (oldPinIndex !== -1 && headers.indexOf("PIN Code") === -1) {
+    sheet.getRange(1, oldPinIndex + 1).setValue("PIN Code");
+    headers[oldPinIndex] = "PIN Code";
+  }
+  // Remove empty duplicate headers created by earlier versions.
+  for (var col = headers.length - 1; col >= 0; col--) {
+    if (!headers[col] || headers.indexOf(headers[col]) !== col) {
+      var duplicateValues = sheet.getRange(2, col + 1, Math.max(sheet.getLastRow() - 1, 1), 1).getDisplayValues();
+      var hasData = duplicateValues.some(function(row) { return String(row[0]).trim() !== ""; });
+      if (!hasData) { sheet.deleteColumn(col + 1); headers.splice(col, 1); }
+    }
+  }
+  required.forEach(function(header) {
+    if (headers.indexOf(header) === -1) {
+      sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header);
+      headers.push(header);
+    }
+  });
+}
+
+function customerRowValues(sheet, data, id, photoUrl) {
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0];
+  var values = {
+    "ID": id, "Customer Name": data.customerName, "Guardian Name": data.guardianName,
+    "Gender": data.gender, "DOB": data.dob, "Religion": data.religion,
+    "Aadhaar No": data.aadhaarNo, "Mobile No": data.mobileNo, "Address": data.address,
+    "District": data.district, "PIN Code": data.pin, "Vehicle": data.vehicle,
+    "Vehicle Company": data.vehicleCompany, "Vehicle Model": data.vehicleModel,
+    "Chassis Number": data.chassisNo, "Engine Number": data.engineNo,
+    "Occupation": data.occupation, "Photo URL": photoUrl
+  };
+  return headers.map(function(header) { return values[String(header).trim()] !== undefined ? values[String(header).trim()] : ""; });
+}
+
+function appendCustomerByHeaders(sheet, data, id, photoUrl) {
+  sheet.appendRow(customerRowValues(sheet, data, id, photoUrl));
+}
+
+function updateCustomerByHeaders(sheet, rowNumber, data, photoUrl) {
+  var row = customerRowValues(sheet, data, data.id, photoUrl);
+  sheet.getRange(rowNumber, 1, 1, row.length).setValues([row]);
 }
 
 function getOrCreateSheet(ss, name, headers) {
