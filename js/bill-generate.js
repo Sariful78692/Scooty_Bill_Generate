@@ -243,11 +243,21 @@ window.deleteSelectedBank = function() {
 window.handleBankSelection = function(sel) {
   if (sel.value) {
     document.getElementById("bankModalTitle").innerText = "Bank Details (" + sel.value + ")";
-    const saved = savedBankDetails[sel.value] || {ifsc:"", accName:"", accNo:"", branch:""};
-    document.getElementById("bankIfsc").value = saved.ifsc;
-    document.getElementById("bankAccName").value = saved.accName;
-    document.getElementById("bankAccNo").value = saved.accNo;
-    document.getElementById("bankBranch").value = saved.branch;
+    // Use the current session value first; otherwise load the latest matching
+    // bank details already returned from the database with the bills data.
+    const saved = savedBankDetails[sel.value] || [...billDataList].reverse().find(b =>
+      String(b["Bank Name"] || "").trim().toLowerCase() === String(sel.value).trim().toLowerCase()
+    );
+    const bank = saved ? {
+      ifsc: saved.ifsc ?? saved["Bank IFSC"] ?? "",
+      accName: saved.accName ?? saved["Bank A/C Name"] ?? "",
+      accNo: saved.accNo ?? saved["Bank A/C No"] ?? "",
+      branch: saved.branch ?? saved["Bank Branch"] ?? ""
+    } : {ifsc:"", accName:"", accNo:"", branch:""};
+    document.getElementById("bankIfsc").value = bank.ifsc;
+    document.getElementById("bankAccName").value = bank.accName;
+    document.getElementById("bankAccNo").value = bank.accNo;
+    document.getElementById("bankBranch").value = bank.branch;
     document.getElementById("bank-modal").classList.remove("hidden");
   }
 };
@@ -522,6 +532,7 @@ window.printExistingBill = function (billId) {
   setInvoiceText("invTotalInWords", convertNumberToWords(total));
   setInvoiceText("invBankName", bill["Bank Name"] || ""); 
   setInvoiceText("invIfsc", bill["Bank IFSC"] || ""); 
+  setInvoiceText("invAccName", bill["Bank A/C Name"] || "");
   setInvoiceText("invAccNo", bill["Bank A/C No"] || ""); 
   setInvoiceText("invBranch", bill["Bank Branch"] || "");
   

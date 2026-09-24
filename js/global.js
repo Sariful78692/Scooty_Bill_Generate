@@ -191,7 +191,11 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
     if (context === 'dashboard') updateDashboardCounts();
     if (context === 'customerEntry') initCustomerEntryForm();
     if (context === 'customerDetails') filterCustomerView();
-    if (context === 'billGenerate') { renderBillCustomerTable([...customerDataList].reverse()); if (window.initBillCatalogs) initBillCatalogs(); }
+    if (context === 'billGenerate') {
+      renderBillCustomerTable([...customerDataList].reverse());
+      if (window.initBillCatalogs) initBillCatalogs();
+      if (window.refreshDropdownOptions) refreshDropdownOptions();
+    }
     if (context === 'report') initReportPage();
     if (context === 'dropdown' && window.refreshDropdownOptions) refreshDropdownOptions();
 
