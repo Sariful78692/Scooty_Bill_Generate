@@ -4,6 +4,8 @@ function doGet(e) {
   ensureCustomerColumns(custSheet);
   var billSheet = getOrCreateBillSheet(ss);
   var dropdownSheet = getOrCreateSheet(ss, "Dropdown", ["ID", "Type", "Value", "Created At"]);
+  var purchaseSheet = getOrCreatePartsSheet(ss, "Parts Purchases");
+  var saleSheet = getOrCreatePartsSheet(ss, "Parts Sales");
   seedDropdownDefaults(dropdownSheet);
 
   var custData = custSheet.getDataRange().getDisplayValues();
@@ -40,10 +42,15 @@ function doGet(e) {
     }
   }
 
+  var purchaseResult = sheetObjectsToRows(purchaseSheet);
+  var saleResult = sheetObjectsToRows(saleSheet);
+
   return ContentService
     .createTextOutput(JSON.stringify({
       customers: custResult,
       bills: billResult,
+      purchases: purchaseResult,
+      sales: saleResult,
       dropdowns: getDropdownData(dropdownSheet)
     }))
     .setMimeType(ContentService.MimeType.JSON);
@@ -236,6 +243,26 @@ function doPost(e) {
         .setMimeType(ContentService.MimeType.JSON);
     }
 
+
+    // SPARE PARTS TRANSACTIONS
+    if (data.action === "save_part_transaction" || data.action === "update_part_transaction" || data.action === "delete_part_transaction") {
+      var partSheet = getOrCreatePartsSheet(ss, data.type === "sale" ? "Parts Sales" : "Parts Purchases");
+      var partRows = partSheet.getDataRange().getValues();
+      var idIndex = partRows[0].indexOf("ID");
+      if (data.action === "save_part_transaction") {
+        var partId = (data.type === "sale" ? "PS-" : "PP-") + new Date().getTime();
+        partSheet.appendRow([partId, data.date || "", data.productName || "", data.serialNo || "", data.quantity || 0, data.price || 0, data.cgst || 0, data.sgst || 0, data.amount || 0]);
+        return jsonResponse({status: "success", id: partId});
+      }
+      for (var pi = 1; pi < partRows.length; pi++) {
+        if (String(partRows[pi][idIndex]).trim() === String(data.id).trim()) {
+          if (data.action === "delete_part_transaction") partSheet.deleteRow(pi + 1);
+          else partSheet.getRange(pi + 1, 1, 1, 9).setValues([[data.id, data.date || "", data.productName || "", data.serialNo || "", data.quantity || 0, data.price || 0, data.cgst || 0, data.sgst || 0, data.amount || 0]]);
+          return jsonResponse({status: "success"});
+        }
+      }
+      return jsonResponse({status: "error", message: "Parts transaction not found"});
+    }
 
     // CUSTOMER PHOTO
     var folderId = "1XaP8aP1-jriVeso5l-eNUku4gmcmQxrp";
@@ -454,6 +481,27 @@ function seedDropdownDefaults(sheet) {
     var exists = rows.slice(1).some(function(r) { return String(r[1]) === type && String(r[2]).trim().toLowerCase() === value.toLowerCase(); });
     if (!exists) { sheet.appendRow(["DD-" + new Date().getTime() + "-" + Math.floor(Math.random()*1000), type, value, new Date()]); rows = sheet.getDataRange().getValues(); }
   }); });
+}
+
+function getOrCreatePartsSheet(ss, name) {
+  var sheet = ss.getSheetByName(name);
+  if (!sheet) {
+    sheet = ss.insertSheet(name);
+    sheet.appendRow(["ID", "Date", "Product Name", "Serial No", "Quantity", "Price", "CGST", "SGST", "Amount"]);
+  }
+  return sheet;
+}
+
+function sheetObjectsToRows(sheet) {
+  var values = sheet.getDataRange().getDisplayValues();
+  var result = [];
+  if (values.length < 2) return result;
+  for (var i = 1; i < values.length; i++) {
+    var obj = {};
+    for (var j = 0; j < values[0].length; j++) obj[String(values[0][j]).trim()] = values[i][j];
+    result.push(obj);
+  }
+  return result;
 }
 
 function jsonResponse(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }

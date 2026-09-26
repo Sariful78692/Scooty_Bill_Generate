@@ -1,5 +1,5 @@
 // Paste your NEW deployed Google Apps Script Web App URL here!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbweo-5yHm9_Hu2dPb92-GqeiULV-2MrMigsN38qvNwcAgsoL0GFvHiQgEp2vOG6P0uVoA/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOuSswanGm73OgXpbSkVFmhIw3fK9GWZpeeK5jYbEH2Enx4txY720IPGecz_Dfjs4-0w/exec";
 
 // Global Variables
 let customerDataList = [];

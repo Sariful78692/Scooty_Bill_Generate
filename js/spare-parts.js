@@ -29,8 +29,9 @@ window.renderPartsSection = function(type) {
             <div class="form-group"><label>Date</label><input type="date" id="partDate" required /></div>
             <div class="form-group"><label>Product Name</label><input type="text" id="partName" list="partsProductSuggestions" oninput="onPartNameChange()" placeholder="Enter / Search product name" required autocomplete="off" /><datalist id="partsProductSuggestions">${allProducts.map(p => `<option value="${p}">`).join('')}</datalist></div>
             <div class="form-group"><label>Current Available Stock</label><div style="display: flex; align-items: center; gap: 10px;"><input type="text" id="currentStockDisplay" readonly placeholder="0" style="background:#f1f5f9; font-weight:bold; width: 100px;" /><span id="lowStockWarning" style="color: #ea580c; font-weight: bold; font-size: 13px; display: none;"><i class="fa-solid fa-triangle-exclamation"></i> Low Stock!</span><span id="outOfStockWarning" style="color: #dc2626; font-weight: bold; font-size: 13px; display: none;"><i class="fa-solid fa-ban"></i> Out of Stock!</span></div></div>
+            ${!isPurchase ? '<div class="form-group"><label>Purchase Price (Per unit)</label><input type="text" id="partPurchasePrice" readonly placeholder="No purchase record" style="background:#f1f5f9; font-weight:bold;"></div>' : ''}
             <div class="form-group"><label>Product Serial No</label><input type="text" id="partSerial" list="serialSuggestions" placeholder="Serial / Batch No" autocomplete="off" /><datalist id="serialSuggestions"></datalist></div>
-            <div class="form-group"><label>Quantity</label><input type="number" step="any" id="partQty" oninput="calculatePartTotal()" required /></div>
+            <div class="form-group"><label>Quantity</label><input type="number" step="any" id="partQty" oninput="calculatePartTotal(); validatePartQuantity()" required /><small id="partQtyError" style="color:#dc2626; font-weight:bold; display:none;"></small></div>
             <div class="form-group"><label>Price (Per unit)</label><input type="number" step="any" id="partPrice" oninput="calculatePartTotal()" required /></div>
             <div class="form-group"><label>CGST (%)</label><input type="number" step="any" id="partCgst" value="0" oninput="calculatePartTotal()" /></div>
             <div class="form-group"><label>SGST (%)</label><input type="number" step="any" id="partSgst" value="0" oninput="calculatePartTotal()" /></div>
@@ -53,6 +54,20 @@ window.onPartNameChange = function() {
   const name = document.getElementById("partName").value;
   const stock = getPartStock(name);
   if(document.getElementById("currentStockDisplay")) document.getElementById("currentStockDisplay").value = stock;
+  const qtyInput = document.getElementById("partQty");
+  const isSaleForm = (document.getElementById("partsFormTitle")?.innerText || "").includes("Sale");
+  if (qtyInput) {
+    if (isSaleForm) {
+      let editableStock = stock;
+      const entryId = document.getElementById("partEntryId")?.value || "";
+      const existingSale = partsSaleList.find(s => String(s["ID"]).trim() === String(entryId).trim());
+      if (existingSale) editableStock += parseFloat(existingSale["Quantity"]) || 0;
+      qtyInput.max = Math.max(0, editableStock);
+    }
+    else qtyInput.removeAttribute("max");
+  }
+  const purchasePriceInput = document.getElementById("partPurchasePrice");
+  if (purchasePriceInput) purchasePriceInput.value = getPartPurchasePrice(name);
 
   const lowStockMsg = document.getElementById("lowStockWarning");
   const outOfStockMsg = document.getElementById("outOfStockWarning");
@@ -85,6 +100,29 @@ window.onPartNameChange = function() {
       if (isSale && !document.getElementById("partEntryId").value) { serialInput.value = ""; serialInput.placeholder = count > 0 ? "Click/Type to choose Serial No" : "No Available Serial Found"; }
     }
   }
+  validatePartQuantity();
+};
+
+window.validatePartQuantity = function() {
+  const title = document.getElementById("partsFormTitle")?.innerText || "";
+  const qtyInput = document.getElementById("partQty");
+  const error = document.getElementById("partQtyError");
+  if (!qtyInput || !title.includes("Sale")) return true;
+
+  const id = document.getElementById("partEntryId")?.value || "";
+  let available = getPartStock(document.getElementById("partName")?.value || "");
+  if (id) {
+    const existingSale = partsSaleList.find(s => String(s["ID"]).trim() === String(id).trim());
+    if (existingSale) available += parseFloat(existingSale["Quantity"]) || 0;
+  }
+  const quantity = parseFloat(qtyInput.value) || 0;
+  const invalid = quantity > available;
+  qtyInput.setCustomValidity(invalid ? `Only ${available} item(s) available in stock.` : "");
+  if (error) {
+    error.textContent = invalid ? `Only ${available} available in stock.` : "";
+    error.style.display = invalid ? "block" : "none";
+  }
+  return !invalid;
 };
 
 window.calculatePartTotal = function() {
@@ -210,4 +248,12 @@ window.filterBalanceSheet = function() {
   const from = document.getElementById("balFromDate").value;
   const to = document.getElementById("balToDate").value;
   renderPartsBalanceReport(from, to);
+};
+
+window.getPartPurchasePrice = function(productName) {
+  const cleanName = String(productName || "").trim().toLowerCase();
+  const purchases = partsPurchaseList.filter(p => String(p["Product Name"] || "").trim().toLowerCase() === cleanName);
+  if (!purchases.length) return "";
+  const price = parseFloat(purchases[purchases.length - 1]["Price"]);
+  return Number.isFinite(price) ? price.toFixed(2) : "";
 };
