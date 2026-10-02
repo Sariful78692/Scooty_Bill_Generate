@@ -162,7 +162,7 @@ window.handlePartsSubmit = async function(e, type) {
   }
 
   const payload = {
-    action: id ? "update_part_transaction" : "save_part_transaction", type: type, id: id || null,
+    action: id ? "update_part_transaction" : "save_part_transaction", type: type, id: id || null, branch: currentBranch,
     date: document.getElementById("partDate").value, productName: name, serialNo: document.getElementById("partSerial").value.trim(),
     quantity: qty, price: document.getElementById("partPrice").value, cgst: document.getElementById("partCgst").value,
     sgst: document.getElementById("partSgst").value, amount: document.getElementById("partAmount").value
@@ -170,7 +170,7 @@ window.handlePartsSubmit = async function(e, type) {
 
   const btn = document.getElementById("partSubmitBtn"); btn.disabled = true; btn.innerText = "Processing...";
   try {
-    const res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
+    const res = await apiFetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) });
     const result = await res.json();
     if (result.status === "success") { alert("Saved successfully!"); await loadCustomers(); renderPartsSection(type); } 
     else { alert("Error: " + (result.message || "Failed to save")); btn.disabled = false; btn.innerText = id ? "Update" : "Save Sale"; }
@@ -189,7 +189,7 @@ window.editPartEntry = function(item, type) {
 window.deletePartEntry = async function(id, type) {
   if (!confirm("Are you sure you want to delete this record?")) return;
   try {
-    const res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete_part_transaction", type: type, id: id }) });
+    const res = await apiFetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete_part_transaction", type: type, id: id, branch: currentBranch }) });
     const result = await res.json();
     if (result.status === "success") { alert("Deleted successfully!"); await loadCustomers(); renderPartsSection(type); } 
     else alert("Failed to delete.");

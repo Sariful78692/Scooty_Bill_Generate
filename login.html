@@ -21,20 +21,20 @@
         <div class="login-brand">
           <i class="fa-solid fa-motorcycle login-logo text-blue"></i>
           <h1>DINO ELECTRIC</h1>
-          <h2 class="card-brand-title">SCOOTY AND CYCLE SHOP</h2>
+          <h2 class="card-brand-title">BRANCH LOGIN</h2>
         </div>
 
         <form id="login-form">
           <!-- Username with Icon -->
           <div class="input-with-icon">
             <i class="fa-solid fa-user"></i>
-            <input type="text" id="login-username" placeholder="Username" required autocomplete="off">
+            <input type="text" id="login-username" placeholder="Branch Login ID" required autocomplete="username">
           </div>
 
           <!-- Password with Icon + Eye Toggle -->
           <div class="input-with-icon">
             <i class="fa-solid fa-lock"></i>
-            <input type="password" id="login-password" placeholder="Password" required>
+            <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
             <i class="fa-solid fa-eye toggle-eye" id="toggle-password"></i>
           </div>
 
@@ -44,10 +44,6 @@
             <i class="fa-solid fa-right-to-bracket" style="margin-right: 5px;"></i> Login
           </button>
 
-          <div class="login-links">
-            <button type="button" onclick="forgotUsername()">Forgot Username?</button>
-            <button type="button" onclick="forgotPassword()">Forgot Password?</button>
-          </div>
         </form>
       </div>
 
@@ -62,6 +58,6 @@
   </div>
 
   <!-- Script File for Login Logic -->
-  <script src="js/login.js"></script>
+  <script src="js/login.js?v=2"></script>
 </body>
 </html>

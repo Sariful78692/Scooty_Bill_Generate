@@ -1,19 +1,11 @@
 function doGet(e) {
-  var authBranch = getAuthenticatedBranch(e && e.parameter ? e.parameter.token : "");
-  if (!authBranch) return jsonResponse({status:"error", message:"Session expired. Please log in again."});
   var ss = SpreadsheetApp.getActiveSpreadsheet();
   var custSheet = ss.getSheets()[0];
   ensureCustomerColumns(custSheet);
-  ensureBranchColumn(custSheet);
   var billSheet = getOrCreateBillSheet(ss);
-  ensureBranchColumn(billSheet);
   var dropdownSheet = getOrCreateSheet(ss, "Dropdown", ["ID", "Type", "Value", "Created At"]);
   var purchaseSheet = getOrCreatePartsSheet(ss, "Parts Purchases");
   var saleSheet = getOrCreatePartsSheet(ss, "Parts Sales");
-  ensureBranchColumn(purchaseSheet);
-  ensureBranchColumn(saleSheet);
-  var branchSheet = getOrCreateSheet(ss, "Branches", ["Branch"]);
-  if (branchSheet.getLastRow() < 2) branchSheet.appendRow(["Main Branch"]);
   seedDropdownDefaults(dropdownSheet);
 
   var custData = custSheet.getDataRange().getDisplayValues();
@@ -55,13 +47,11 @@ function doGet(e) {
 
   return ContentService
     .createTextOutput(JSON.stringify({
-      customers: isMainBranch(authBranch) ? custResult : filterRowsByBranch(custResult, authBranch),
-      bills: isMainBranch(authBranch) ? billResult : filterRowsByBranch(billResult, authBranch),
-      purchases: filterRowsByBranch(purchaseResult, authBranch),
-      sales: filterRowsByBranch(saleResult, authBranch),
-      dropdowns: getDropdownData(dropdownSheet),
-      branches: branchSheet.getDataRange().getDisplayValues().slice(1).map(function(row) { return String(row[0] || "").trim(); }).filter(Boolean),
-      branch: authBranch
+      customers: custResult,
+      bills: billResult,
+      purchases: purchaseResult,
+      sales: saleResult,
+      dropdowns: getDropdownData(dropdownSheet)
     }))
     .setMimeType(ContentService.MimeType.JSON);
 }
@@ -70,56 +60,9 @@ function doGet(e) {
 function doPost(e) {
   try {
     var data = JSON.parse(e.postData.contents);
-    if (data.action === "branch_login") return branchLogin(data);
-    var authBranch = getAuthenticatedBranch(data.token);
-    if (!authBranch) return jsonResponse({status:"error", message:"Session expired. Please log in again."});
-    data.branch = authBranch;
-    if (data.action === "create_main_branch_user") {
-      if (String(authBranch).trim().toLowerCase() !== "main branch") return jsonResponse({status:"error", message:"Only a Main Branch user can create users."});
-      var targetBranch = String(data.targetBranch || "").trim();
-      var newUsername = String(data.username || "").trim();
-      var newPassword = String(data.password || "");
-      if (!targetBranch || targetBranch.length > 80) return jsonResponse({status:"error", message:"Enter a branch name up to 80 characters."});
-      if (/^[=+@]/.test(targetBranch)) return jsonResponse({status:"error", message:"That branch name is not allowed."});
-      if (!newUsername || newUsername.length > 80) return jsonResponse({status:"error", message:"Enter a login ID up to 80 characters."});
-      if (newPassword.length < 6 || newPassword.length > 128) return jsonResponse({status:"error", message:"Password must be 6 to 128 characters."});
-      var userSheet = ensureBranchUserSheet();
-      var userRows = userSheet.getDataRange().getDisplayValues();
-      var usernameTaken = userRows.slice(1).some(function(row) { return String(row[1]).trim().toLowerCase() === newUsername.toLowerCase(); });
-      if (usernameTaken) return jsonResponse({status:"error", message:"That login ID is already in use. Choose a different login ID."});
-      userSheet.appendRow([targetBranch, newUsername, newPassword]);
-      var branchesSheet = getOrCreateSheet(SpreadsheetApp.getActiveSpreadsheet(), "Branches", ["Branch"]);
-      var knownBranches = branchesSheet.getDataRange().getDisplayValues();
-      var branchExists = knownBranches.slice(1).some(function(row) { return String(row[0]).trim().toLowerCase() === targetBranch.toLowerCase(); });
-      if (!branchExists) branchesSheet.appendRow([targetBranch]);
-      return jsonResponse({status:"success"});
-    }
-    if (data.action === "list_main_branch_users" || data.action === "update_main_branch_user" || data.action === "delete_main_branch_user") {
-      if (!isMainBranch(authBranch)) return jsonResponse({status:"error", message:"Only Main Branch can manage users."});
-      var adminUsers = ensureBranchUserSheet();
-      var adminRows = adminUsers.getDataRange().getDisplayValues();
-      if (data.action === "list_main_branch_users") {
-        return jsonResponse({status:"success", users:adminRows.slice(1).map(function(row, index) { return {row:index + 2, branch:String(row[0] || "").trim(), username:String(row[1] || "").trim(), password:String(row[2] || "")}; }).filter(function(user) { return user.branch.toLowerCase() !== "main branch"; })});
-      }
-      var targetRow = Number(data.row);
-      if (!Number.isInteger(targetRow) || targetRow < 2 || targetRow > adminRows.length || String(adminRows[targetRow - 1][0]).trim().toLowerCase() === "main branch") return jsonResponse({status:"error", message:"Branch user not found."});
-      if (data.action === "delete_main_branch_user") {
-        adminUsers.deleteRow(targetRow);
-        return jsonResponse({status:"success"});
-      }
-      var updatedUsername = String(data.username || "").trim();
-      var updatedPassword = String(data.password || "");
-      if (!updatedUsername || updatedUsername.length > 80) return jsonResponse({status:"error", message:"Enter a login ID up to 80 characters."});
-      if (updatedPassword.length < 6 || updatedPassword.length > 128) return jsonResponse({status:"error", message:"Password must be 6 to 128 characters."});
-      var duplicateUsername = adminRows.slice(1).some(function(row, index) { return index + 2 !== targetRow && String(row[1]).trim().toLowerCase() === updatedUsername.toLowerCase(); });
-      if (duplicateUsername) return jsonResponse({status:"error", message:"That login ID is already in use."});
-      adminUsers.getRange(targetRow, 2, 1, 2).setValues([[updatedUsername, updatedPassword]]);
-      return jsonResponse({status:"success"});
-    }
     var ss = SpreadsheetApp.getActiveSpreadsheet();
     var custSheet = ss.getSheets()[0];
     ensureCustomerColumns(custSheet);
-    ensureBranchColumn(custSheet);
 
     if (data.action === "save_dropdown" || data.action === "update_dropdown" || data.action === "delete_dropdown") {
       var ds = getOrCreateSheet(ss, "Dropdown", ["ID", "Type", "Value", "Created At"]);
@@ -148,7 +91,6 @@ function doPost(e) {
     // SAVE BILL
     if (data.action === "save_bill") {
       var billSheet = getOrCreateBillSheet(ss);
-      ensureBranchColumn(billSheet);
       var lastRow = billSheet.getLastRow();
 
       var nextInvNo = 1;
@@ -202,8 +144,7 @@ function doPost(e) {
         data.bankAccName,
         data.bankAccNo,
         data.bankBranch,
-        formattedDate,
-        normalizeBranch(data.branch)
+        formattedDate
       ]);
 
       return ContentService
@@ -217,9 +158,7 @@ function doPost(e) {
 
     // UPDATE BILL
     if (data.action === "update_bill") {
-      if (!isMainBranch(authBranch)) return jsonResponse({status:"error", message:"Only Main Branch can edit bills."});
       var billSheet = getOrCreateBillSheet(ss);
-      ensureBranchColumn(billSheet);
       var rows = billSheet.getDataRange().getValues();
       var updated = false;
 
@@ -232,7 +171,7 @@ function doPost(e) {
           var existingDate = rows[i][26];
 
           billSheet
-            .getRange(i + 1, 1, 1, 28)
+            .getRange(i + 1, 1, 1, 27)
             .setValues([[
               data.billId,
               data.custId,
@@ -260,8 +199,7 @@ function doPost(e) {
               data.bankAccName,
               data.bankAccNo,
               data.bankBranch,
-              existingDate,
-              rows[i][27] || normalizeBranch(data.branch)
+              existingDate
             ]]);
 
           updated = true;
@@ -279,9 +217,7 @@ function doPost(e) {
 
     // DELETE BILL
     if (data.action === "delete_bill") {
-      if (!isMainBranch(authBranch)) return jsonResponse({status:"error", message:"Only Main Branch can delete bills."});
       var billSheet = getOrCreateBillSheet(ss);
-      ensureBranchColumn(billSheet);
       var rows = billSheet.getDataRange().getValues();
 
       for (var i = 1; i < rows.length; i++) {
@@ -311,18 +247,17 @@ function doPost(e) {
     // SPARE PARTS TRANSACTIONS
     if (data.action === "save_part_transaction" || data.action === "update_part_transaction" || data.action === "delete_part_transaction") {
       var partSheet = getOrCreatePartsSheet(ss, data.type === "sale" ? "Parts Sales" : "Parts Purchases");
-      ensureBranchColumn(partSheet);
       var partRows = partSheet.getDataRange().getValues();
       var idIndex = partRows[0].indexOf("ID");
       if (data.action === "save_part_transaction") {
         var partId = (data.type === "sale" ? "PS-" : "PP-") + new Date().getTime();
-        partSheet.appendRow([partId, data.date || "", data.productName || "", data.serialNo || "", data.quantity || 0, data.price || 0, data.cgst || 0, data.sgst || 0, data.amount || 0, normalizeBranch(data.branch)]);
+        partSheet.appendRow([partId, data.date || "", data.productName || "", data.serialNo || "", data.quantity || 0, data.price || 0, data.cgst || 0, data.sgst || 0, data.amount || 0]);
         return jsonResponse({status: "success", id: partId});
       }
       for (var pi = 1; pi < partRows.length; pi++) {
-        if (String(partRows[pi][idIndex]).trim() === String(data.id).trim() && normalizeBranch(partRows[pi][9]) === authBranch) {
+        if (String(partRows[pi][idIndex]).trim() === String(data.id).trim()) {
           if (data.action === "delete_part_transaction") partSheet.deleteRow(pi + 1);
-          else partSheet.getRange(pi + 1, 1, 1, 10).setValues([[data.id, data.date || "", data.productName || "", data.serialNo || "", data.quantity || 0, data.price || 0, data.cgst || 0, data.sgst || 0, data.amount || 0, partRows[pi][9] || normalizeBranch(data.branch)]]);
+          else partSheet.getRange(pi + 1, 1, 1, 9).setValues([[data.id, data.date || "", data.productName || "", data.serialNo || "", data.quantity || 0, data.price || 0, data.cgst || 0, data.sgst || 0, data.amount || 0]]);
           return jsonResponse({status: "success"});
         }
       }
@@ -374,13 +309,12 @@ function doPost(e) {
     // UPDATE CUSTOMER
     if (data.action === "update") {
       var rows = custSheet.getDataRange().getValues();
-      var customerBranchIndex = custSheet.getRange(1, 1, 1, custSheet.getLastColumn()).getDisplayValues()[0].indexOf("Branch");
       var updated = false;
 
       for (var i = 1; i < rows.length; i++) {
         if (
           String(rows[i][0]).trim() ===
-          String(data.id).trim() && normalizeBranch(rows[i][customerBranchIndex]) === authBranch
+          String(data.id).trim()
         ) {
           updateCustomerByHeaders(custSheet, i + 1, data, photoUrl);
 
@@ -401,12 +335,11 @@ function doPost(e) {
     // DELETE CUSTOMER
     if (data.action === "delete") {
       var rows = custSheet.getDataRange().getValues();
-      var customerBranchIndex = custSheet.getRange(1, 1, 1, custSheet.getLastColumn()).getDisplayValues()[0].indexOf("Branch");
 
       for (var i = 1; i < rows.length; i++) {
         if (
           String(rows[i][0]).trim() ===
-          String(data.id).trim() && normalizeBranch(rows[i][customerBranchIndex]) === authBranch
+          String(data.id).trim()
         ) {
           custSheet.deleteRow(i + 1);
 
@@ -470,8 +403,7 @@ function getOrCreateBillSheet(ss) {
       "Bank A/C Name",
       "Bank A/C No",
       "Bank Branch",
-      "Date",
-      "Branch"
+      "Date"
     ]);
   }
 
@@ -480,7 +412,7 @@ function getOrCreateBillSheet(ss) {
 
 // Adds new customer columns without changing or rewriting any existing row.
 function ensureCustomerColumns(sheet) {
-  var required = ["ID", "Customer Name", "Guardian Name", "Gender", "DOB", "Religion", "Aadhaar No", "Mobile No", "Address", "District", "State", "PIN Code", "Vehicle", "Vehicle Company", "Vehicle Model", "Chassis Number", "Engine Number", "Occupation", "Photo URL", "Branch"];
+  var required = ["ID", "Customer Name", "Guardian Name", "Gender", "DOB", "Religion", "Aadhaar No", "Mobile No", "Address", "District", "State", "PIN Code", "Vehicle", "Vehicle Company", "Vehicle Model", "Chassis Number", "Engine Number", "Occupation", "Photo URL"];
   var lastColumn = sheet.getLastColumn();
   if (lastColumn === 0) {
     sheet.getRange(1, 1, 1, required.length).setValues([required]);
@@ -518,7 +450,7 @@ function customerRowValues(sheet, data, id, photoUrl) {
     "District": data.district, "State": data.state, "PIN Code": data.pin, "Vehicle": data.vehicle,
     "Vehicle Company": data.vehicleCompany, "Vehicle Model": data.vehicleModel,
     "Chassis Number": data.chassisNo, "Engine Number": data.engineNo,
-    "Occupation": data.occupation, "Photo URL": photoUrl, "Branch": normalizeBranch(data.branch)
+    "Occupation": data.occupation, "Photo URL": photoUrl
   };
   return headers.map(function(header) { return values[String(header).trim()] !== undefined ? values[String(header).trim()] : ""; });
 }
@@ -555,29 +487,9 @@ function getOrCreatePartsSheet(ss, name) {
   var sheet = ss.getSheetByName(name);
   if (!sheet) {
     sheet = ss.insertSheet(name);
-    sheet.appendRow(["ID", "Date", "Product Name", "Serial No", "Quantity", "Price", "CGST", "SGST", "Amount", "Branch"]);
+    sheet.appendRow(["ID", "Date", "Product Name", "Serial No", "Quantity", "Price", "CGST", "SGST", "Amount"]);
   }
   return sheet;
-}
-
-function normalizeBranch(value) { return String(value || "Main Branch").trim() || "Main Branch"; }
-
-// Add a Branch column without changing existing records; old records stay under Main Branch.
-function ensureBranchColumn(sheet) {
-  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0].map(function(h) { return String(h).trim(); });
-  var branchIndex = headers.indexOf("Branch");
-  if (branchIndex === -1) {
-    branchIndex = headers.length;
-    sheet.getRange(1, branchIndex + 1).setValue("Branch");
-  }
-  var lastRow = sheet.getLastRow();
-  if (lastRow > 1) {
-    var range = sheet.getRange(2, branchIndex + 1, lastRow - 1, 1);
-    var values = range.getValues();
-    var changed = false;
-    values.forEach(function(row) { if (!String(row[0] || "").trim()) { row[0] = "Main Branch"; changed = true; } });
-    if (changed) range.setValues(values);
-  }
 }
 
 function sheetObjectsToRows(sheet) {
@@ -593,77 +505,6 @@ function sheetObjectsToRows(sheet) {
 }
 
 function jsonResponse(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
-function filterRowsByBranch(rows, branch) {
-  return (rows || []).filter(function(row) { return normalizeBranch(row.Branch) === branch; });
-}
-function isMainBranch(branch) { return String(branch || "").trim().toLowerCase() === "main branch"; }
-
-function ensureBranchUserSheet() {
-  var ss = SpreadsheetApp.getActiveSpreadsheet();
-  var sheet = ss.getSheetByName("Branch Users");
-  if (!sheet) {
-    sheet = ss.insertSheet("Branch Users");
-    sheet.appendRow(["Branch", "Username", "Password"]);
-  }
-  if (sheet.getRange(1, 3).getDisplayValue() !== "Password") sheet.getRange(1, 3).setValue("Password");
-  if (sheet.getLastRow() < 2) sheet.appendRow(["Main Branch", "admin", "admin123"]);
-  return sheet;
-}
-
-function branchLogin(data) {
-  var sheet = ensureBranchUserSheet();
-  var rows = sheet.getDataRange().getDisplayValues();
-  var username = String(data.username || "").trim();
-  var password = String(data.password || "");
-  for (var i = 1; i < rows.length; i++) {
-    if (String(rows[i][1]).trim() === username && (String(rows[i][2]) === password || String(rows[i][2]) === hashBranchPassword(password))) {
-      // Migrate legacy SHA-256 entries to the requested readable sheet value after a successful login.
-      if (String(rows[i][2]) === hashBranchPassword(password)) sheet.getRange(i + 1, 3).setValue(password);
-      var token = Utilities.getUuid() + Utilities.getUuid();
-      CacheService.getScriptCache().put("branch_session_" + token, String(rows[i][0]).trim(), 21600);
-      return jsonResponse({status:"success", token:token, branch:String(rows[i][0]).trim()});
-    }
-  }
-  return jsonResponse({status:"error", message:"Invalid branch ID or password"});
-}
-
-function getAuthenticatedBranch(token) {
-  if (!token) return "";
-  return CacheService.getScriptCache().get("branch_session_" + String(token)) || "";
-}
-
-function hashBranchPassword(password) {
-  var bytes = Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, String(password), Utilities.Charset.UTF_8);
-  return bytes.map(function(b) { var value = (b < 0 ? b + 256 : b).toString(16); return value.length === 1 ? "0" + value : value; }).join("");
-}
-
-// Run this from the Apps Script editor to add a branch login or reset its credentials.
-function createOrUpdateBranchUser() {
-  var ui = SpreadsheetApp.getUi();
-  var branchPrompt = ui.prompt("New branch", "Branch name:", ui.ButtonSet.OK_CANCEL);
-  if (branchPrompt.getSelectedButton() !== ui.Button.OK) return;
-  var branch = branchPrompt.getResponseText().trim();
-  var usernamePrompt = ui.prompt("New branch", "Login ID:", ui.ButtonSet.OK_CANCEL);
-  if (usernamePrompt.getSelectedButton() !== ui.Button.OK) return;
-  var username = usernamePrompt.getResponseText().trim();
-  var passwordPrompt = ui.prompt("New branch", "Password:", ui.ButtonSet.OK_CANCEL);
-  if (passwordPrompt.getSelectedButton() !== ui.Button.OK) return;
-  var password = passwordPrompt.getResponseText();
-  if (!branch || !username || !password) { ui.alert("Branch, login ID and password are required."); return; }
-  var users = ensureBranchUserSheet();
-  var existing = users.getDataRange().getDisplayValues().slice(1);
-  var existingBranchRow = -1;
-  for (var i = 0; i < existing.length; i++) {
-    if (String(existing[i][0]).trim().toLowerCase() === branch.toLowerCase()) existingBranchRow = i + 2;
-    else if (String(existing[i][1]).trim().toLowerCase() === username.toLowerCase()) { ui.alert("That login ID is already used by another branch."); return; }
-  }
-  if (existingBranchRow > 0) users.getRange(existingBranchRow, 2, 1, 2).setValues([[username, password]]);
-  else users.appendRow([branch, username, password]);
-  var branchSheet = getOrCreateSheet(SpreadsheetApp.getActiveSpreadsheet(), "Branches", ["Branch"]);
-  if (!branchSheet.getDataRange().getDisplayValues().some(function(row, index) { return index > 0 && String(row[0]).trim().toLowerCase() === branch.toLowerCase(); })) branchSheet.appendRow([branch]);
-  ui.alert("Branch login created for " + branch + ".");
-}
-
 function getDropdownData(sheet) {
   var rows = sheet.getDataRange().getDisplayValues(), out = [];
   for (var i = 1; i < rows.length; i++) out.push({ID: rows[i][0], Type: rows[i][1], Value: rows[i][2], "Created At": rows[i][3]});

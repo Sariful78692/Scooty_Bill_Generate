@@ -112,7 +112,7 @@ window.handleCustomerFormSubmit = async function(e) {
     }
 
     const payload = {
-      action: editId ? "update" : "create", id: editId || null,
+      action: editId ? "update" : "create", id: editId || null, branch: currentBranch,
       customerName: nameVal, guardianName: document.getElementById("guardianName")?.value.trim() || "",
       gender: document.getElementById("gender")?.value || "", dob: document.getElementById("dob")?.value || "",
       religion: document.getElementById("religion")?.value.trim() || "", aadhaarNo: aadhaarVal, mobileNo: mobileVal,
@@ -126,7 +126,7 @@ window.handleCustomerFormSubmit = async function(e) {
     uiRecoveryTimer = setTimeout(() => { submitBtn.disabled = false; submitBtn.innerText = "Retry Save"; }, 12000);
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const response = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload), signal: controller.signal });
+    const response = await apiFetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload), signal: controller.signal });
     clearTimeout(timeoutId);
 
     if (!response.ok) throw new Error("Server returned " + response.status);

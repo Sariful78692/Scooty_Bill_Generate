@@ -76,8 +76,10 @@ window.renderBillCustomerTable = function(list) {
       const latestBillId = String(latestBill["Bill ID"] || "").trim();
       if (latestBillId) {
         actionBtns += ` <button type="button" class="btn-print" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Print Bill" onclick="handlePrintClick('${custId}')"><i class="fa-solid fa-print"></i></button>`;
-        actionBtns += ` <button type="button" class="btn-edit" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Edit Bill" onclick="editGeneratedBill('${latestBillId}')"><i class="fa-solid fa-pen"></i></button>`;
-        actionBtns += ` <button type="button" class="btn-delete" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Delete Bill" onclick="deleteGeneratedBill('${latestBillId}')"><i class="fa-solid fa-trash"></i></button>`;
+        if (String(currentBranch).trim().toLowerCase() === "main branch") {
+          actionBtns += ` <button type="button" class="btn-edit" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Edit Bill" onclick="editGeneratedBill('${latestBillId}')"><i class="fa-solid fa-pen"></i></button>`;
+          actionBtns += ` <button type="button" class="btn-delete" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Delete Bill" onclick="deleteGeneratedBill('${latestBillId}')"><i class="fa-solid fa-trash"></i></button>`;
+        }
       }
     }
 
@@ -313,7 +315,7 @@ window.saveBillToDatabase = async function() {
   }
 
   const payload = {
-    action: existingBillId ? "update_bill" : "save_bill", billId: existingBillId, custId: custId, 
+    action: existingBillId ? "update_bill" : "save_bill", billId: existingBillId, branch: currentBranch, custId: custId,
     customerName: currentBillCustomerObj["Customer Name"], item: document.getElementById("billItem").value, 
     vehicleCompany: document.getElementById("billCompany").value, vehicleModel: document.getElementById("billModel").value,
     hsn: document.getElementById("billHsn").value, chassisNo: document.getElementById("billChassis").value, 
@@ -330,7 +332,7 @@ window.saveBillToDatabase = async function() {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
-    const res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload), signal: controller.signal });
+    const res = await apiFetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload), signal: controller.signal });
     clearTimeout(timeoutId);
     if (!res.ok) throw new Error(`Server returned ${res.status}`);
     const result = await res.json();
@@ -393,7 +395,7 @@ window.editGeneratedBill = function(billId) {
 window.deleteGeneratedBill = async function(billId) {
   if(!confirm("Are you sure you want to delete Invoice: " + billId + "?")) return;
   try {
-     const res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete_bill", billId: billId }) });
+     const res = await apiFetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete_bill", billId: billId, branch: currentBranch }) });
      const result = await res.json();
      if(result.status === "success"){
         showToast("Bill deleted successfully!");

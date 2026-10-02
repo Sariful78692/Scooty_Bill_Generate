@@ -27,7 +27,9 @@
 
 .login-links { display: flex; justify-content: space-between; margin-top: 15px; }
 .login-links button, .account-actions button { border: 0; background: transparent; color: #2563eb; cursor: pointer; }
-.login-message { color: #dc2626; min-height: 20px; }
+.login-message { color: #2563eb; min-height: 20px; }
+.login-message.is-pending { color: #2563eb; }
+.login-message.is-error { color: #dc2626; }
 .account-actions { padding: 15px; display: grid; gap: 10px; }
 
 .scooty-art { font-size: 82px; line-height: 1.1; margin-bottom: 8px; display: inline-block; color: #2563eb; filter: drop-shadow(0 8px 8px rgba(37,99,235,.2)); }

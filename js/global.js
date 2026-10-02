@@ -1,5 +1,5 @@
 // Paste your NEW deployed Google Apps Script Web App URL here!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyOuSswanGm73OgXpbSkVFmhIw3fK9GWZpeeK5jYbEH2Enx4txY720IPGecz_Dfjs4-0w/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby4XiryrzR8BmYzNSPhVufvDfmORZ7FUTZOWQ-_r-NTZBRwsY9Gntlwjd66ZCqWgR7m/exec";
 
 // Global Variables
 let customerDataList = [];
@@ -9,6 +9,8 @@ let partsSaleList = [];
 let currentBillCustomerObj = null;
 let savedBankDetails = {};
 let currentFilter = "all";
+let currentBranch = localStorage.getItem("daduBranch") || "Main Branch";
+let availableBranches = ["Main Branch"];
 
 // Hash-based routing map
 const ROUTES = {
@@ -25,42 +27,112 @@ let todaySalesChartInst = null;
 let monthlySalesChartInst = null;
 
 // ---------------- LOGIN / ACCOUNT ----------------
-const AUTH_KEY = "daduAuth";
 
 // লগইন করা না থাকলে সরাসরি login.html এ পাঠিয়ে দাও
-if (localStorage.getItem("daduLoggedIn") !== "true") {
+if (!localStorage.getItem("daduSessionToken") || !localStorage.getItem("daduBranch")) {
   location.replace("login.html");
 }
 
-function getAuth() {
-  return JSON.parse(localStorage.getItem(AUTH_KEY) || JSON.stringify({ username: "admin", password: "admin123" }));
-}
-
 function logout() {
+  localStorage.removeItem("daduSessionToken");
+  localStorage.removeItem("daduBranch");
+  localStorage.removeItem("daduCurrentBranch");
   localStorage.removeItem("daduLoggedIn");
   location.replace("login.html");
 }
 
-window.forgotUsername = function() { alert("Your username is: " + getAuth().username); };
-window.forgotPassword = function() { const u = prompt("Enter your username:"); if (u === getAuth().username) alert("Your password is: " + getAuth().password); else alert("Username not found."); };
+window.apiFetch = function(url, options = {}) {
+  const token = localStorage.getItem("daduSessionToken");
+  const method = String(options.method || "GET").toUpperCase();
+  if (method === "GET") {
+    const separator = url.includes("?") ? "&" : "?";
+    url += separator + "token=" + encodeURIComponent(token || "");
+  }
+  else if (options.body && typeof options.body === "string") {
+    try {
+      const payload = JSON.parse(options.body);
+      payload.token = token;
+      payload.branch = currentBranch;
+      options = { ...options, body: JSON.stringify(payload) };
+    } catch (_) {}
+  }
+  return fetch(url, options).then(async response => {
+    try {
+      const result = await response.clone().json();
+      if (result.status === "error" && /session expired/i.test(result.message || "")) logout();
+    } catch (_) {}
+    return response;
+  });
+};
 
 window.openSettings = function() {
   const app = document.getElementById("app-content");
   renderPageWithLoader(() => {
-    app.innerHTML = `<section class="content-section settings-page"><h1><i class="fa-solid fa-gear"></i> Settings</h1><div class="settings-card"><h3>User Account</h3><p>Change your login username and password</p><span class="settings-buttons"><button class="btn-primary" onclick="changeAccount()">Change Username / Password</button></span></div></section>`;
+    const isMainBranch = String(currentBranch).trim().toLowerCase() === "main branch";
+    app.innerHTML = `<section class="content-section settings-page"><h1><i class="fa-solid fa-gear"></i> Settings</h1><div class="settings-card"><h3>Branch Login</h3><p>Signed in to <strong>${escapeHtml(currentBranch)}</strong>.</p>${isMainBranch ? `<form id="create-main-user-form"><h3>Create Branch User</h3><div class="form-group"><label for="new-main-branch">Branch Name</label><input id="new-main-branch" name="branch" required maxlength="80" placeholder="e.g. Kolkata Branch"></div><div class="form-group" style="margin-top:14px"><label for="new-main-username">Login ID</label><input id="new-main-username" name="username" autocomplete="username" required maxlength="80"></div><div class="form-group" style="margin-top:14px"><label for="new-main-password">Password</label><input id="new-main-password" name="password" type="password" autocomplete="new-password" required minlength="6" maxlength="128"></div><div class="form-actions"><button class="btn-primary" type="submit">Create User</button></div><p id="create-main-user-message" role="status" aria-live="polite"></p></form><h3 style="margin-top:24px">Branch Users</h3><div class="table-responsive"><table><thead><tr><th>Branch</th><th>Login ID</th><th>Password</th><th>Actions</th></tr></thead><tbody id="main-branch-users"><tr><td colspan="4">Loading...</td></tr></tbody></table></div>` : `<p>User management is available only while signed in to Main Branch.</p>`}</div></section>`;
+    if (isMainBranch) loadMainBranchUsers();
+    const form = document.getElementById("create-main-user-form");
+    form?.addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = form.querySelector('button[type="submit"]');
+      const message = document.getElementById("create-main-user-message");
+      const branch = document.getElementById("new-main-branch").value.trim();
+      const username = document.getElementById("new-main-username").value.trim();
+      const password = document.getElementById("new-main-password").value;
+      button.disabled = true;
+      message.textContent = "Creating user…";
+      try {
+        const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"create_main_branch_user", targetBranch:branch, username, password})});
+        const result = await response.json();
+        if (!response.ok || result.status !== "success") throw new Error(result.message || "Could not create user.");
+        form.reset();
+        loadMainBranchUsers();
+        message.textContent = `User “${username}” created for ${branch}.`;
+      } catch (error) {
+        message.textContent = error.message || "Could not connect to the server.";
+      } finally {
+        button.disabled = false;
+      }
+    });
   });
 };
 
-window.changeAccount = function() {
-  const auth = getAuth();
-  const old = prompt("Enter current password:");
-  if (old !== auth.password) return alert("Current password is incorrect.");
-  const username = prompt("New username:", auth.username);
-  const password = prompt("New password:");
-  if (username && password) {
-    localStorage.setItem(AUTH_KEY, JSON.stringify({ username, password }));
-    alert("Username and password changed successfully.");
-  }
+window.loadMainBranchUsers = async function() {
+  const tbody = document.getElementById("main-branch-users");
+  if (!tbody) return;
+  try {
+    const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"list_main_branch_users"})});
+    const result = await response.json();
+    if (result.status !== "success") throw new Error(result.message || "Could not load users.");
+    tbody.innerHTML = result.users.length ? result.users.map(user => `<tr><td>${escapeHtml(user.branch)}</td><td>${escapeHtml(user.username)}</td><td>${escapeHtml(user.password)}</td><td><button class="btn-edit" data-user-edit="${user.row}">Edit</button> <button class="btn-delete" data-user-delete="${user.row}">Delete</button></td></tr>`).join("") : `<tr><td colspan="4">No branch users found.</td></tr>`;
+    result.users.forEach(user => {
+      tbody.querySelector(`[data-user-edit="${user.row}"]`)?.addEventListener("click", () => editMainBranchUser(user.row, user.username));
+      tbody.querySelector(`[data-user-delete="${user.row}"]`)?.addEventListener("click", () => deleteMainBranchUser(user.row, user.branch));
+    });
+  } catch (error) { tbody.innerHTML = `<tr><td colspan="4">${escapeHtml(error.message)}</td></tr>`; }
+};
+
+window.editMainBranchUser = async function(row, username) {
+  const newUsername = prompt("Login ID:", username);
+  if (newUsername === null) return;
+  const newPassword = prompt("New password (minimum 6 characters):");
+  if (newPassword === null) return;
+  try {
+    const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"update_main_branch_user", row, username:newUsername.trim(), password:newPassword})});
+    const result = await response.json();
+    if (result.status !== "success") throw new Error(result.message || "Could not update user.");
+    await loadMainBranchUsers();
+  } catch (error) { alert(error.message); }
+};
+
+window.deleteMainBranchUser = async function(row, branch) {
+  if (!confirm(`Delete login for ${branch}?`)) return;
+  try {
+    const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"delete_main_branch_user", row})});
+    const result = await response.json();
+    if (result.status !== "success") throw new Error(result.message || "Could not delete user.");
+    await loadMainBranchUsers();
+  } catch (error) { alert(error.message); }
 };
 
 document.addEventListener("DOMContentLoaded", function () {
@@ -262,10 +334,15 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
 // Data Fetching
 window.loadCustomers = async function(forceReload = false) {
   try {
-    const res = await fetch(APPS_SCRIPT_URL);
+    const res = await apiFetch(APPS_SCRIPT_URL);
     const data = await res.json();
+    if (data.status === "error") { logout(); return; }
+    currentBranch = data.branch || currentBranch;
+    availableBranches = data.branches || ["Main Branch"];
+    const branchLabel = document.getElementById("current-branch-label");
+    if (branchLabel) branchLabel.textContent = currentBranch;
     customerDataList = data.customers || [];
-    billDataList = data.bills || []; 
+    billDataList = data.bills || [];
     partsPurchaseList = data.purchases || [];
     partsSaleList = data.sales || [];
     window.dropdownDataList = data.dropdowns || [];
@@ -275,6 +352,10 @@ window.loadCustomers = async function(forceReload = false) {
     if (document.getElementById("bill-generate-section")) renderBillCustomerTable([...customerDataList].reverse());
     if (document.getElementById("report-section")) generateReport();
   } catch (err) { console.error("Failed to load data."); }
+};
+
+window.escapeHtml = function(value) {
+  return String(value).replace(/[&<>"']/g, char => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[char]));
 };
 
 // Shared Helper Functions

@@ -1,3 +1,6 @@
+let customerCurrentPage = 1;
+let customerFilteredRows = [];
+
 window.filterCustomerView = function() {
   const title = document.getElementById("details-view-title");
   if(!title) return;
@@ -9,9 +12,8 @@ window.filterCustomerView = function() {
   title.innerText = currentFilter !== "all" ? `Customer Details - ${currentFilter}` : "Customer Details (All)";
   
   // লেটেস্ট এন্ট্রি প্রথমে দেখানোর জন্য (Reverse Order)
-  let reversedList = [...filtered].reverse();
-  
-  renderCustomerTable(reversedList);
+  customerCurrentPage = 1;
+  renderCustomerTable([...filtered].reverse());
 };
 
 window.filterCustomerDetailsTable = function() {
@@ -32,14 +34,23 @@ window.filterCustomerDetailsTable = function() {
   }
 
   // রিভার্স অর্ডার ঠিক রেখে রেন্ডার করা হচ্ছে
-  let reversedList = [...filtered].reverse();
-  renderCustomerTable(reversedList);
+  customerCurrentPage = 1;
+  renderCustomerTable([...filtered].reverse());
 };
 
 window.renderCustomerTable = function(list) {
   const thead = document.getElementById("customer-table-head");
   const tbody = document.getElementById("customer-table-body");
   if (!tbody || !thead) return;
+  customerFilteredRows = list;
+  const limit = document.getElementById("customerPageSize")?.value || "10";
+  const pageSize = limit === "all" ? Math.max(list.length, 1) : Number(limit);
+  const pageCount = Math.max(1, Math.ceil(list.length / pageSize));
+  customerCurrentPage = Math.min(customerCurrentPage, pageCount);
+  const startIndex = (customerCurrentPage - 1) * pageSize;
+  list = list.slice(startIndex, startIndex + pageSize);
+  const pagination = document.getElementById("customer-pagination");
+  if (pagination) pagination.innerHTML = `<span>Page ${customerCurrentPage} of ${pageCount}</span><button type="button" class="btn-primary" onclick="changeCustomerPage(-1)" ${customerCurrentPage <= 1 ? "disabled" : ""}>Previous</button><button type="button" class="btn-primary" onclick="changeCustomerPage(1)" ${customerCurrentPage >= pageCount ? "disabled" : ""}>Next</button>`;
   
   thead.innerHTML = `<tr><th>Photo</th><th>Name</th><th>Mobile</th><th>Vehicle</th><th>Company</th><th>Model</th><th>Actions</th></tr>`;
   tbody.innerHTML = "";
@@ -92,6 +103,11 @@ window.renderCustomerTable = function(list) {
       </td>`;
     tbody.appendChild(tr);
   });
+};
+
+window.changeCustomerPage = function(delta) {
+  customerCurrentPage += delta;
+  renderCustomerTable(customerFilteredRows);
 };
 
 window.editCustomer = function(id) {
@@ -153,7 +169,7 @@ window.editCustomer = function(id) {
 window.deleteCustomer = async function(id) {
   if (!confirm("Are you sure you want to delete this customer?")) return;
   try {
-    const res = await fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete", id: id }) });
+    const res = await apiFetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete", id: id }) });
     const result = await res.json();
     if (result.status === "success") {
       showToast("Customer deleted successfully!");
