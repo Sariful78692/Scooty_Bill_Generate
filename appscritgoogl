@@ -7,9 +7,11 @@ function doGet(e) {
   ensureBranchColumn(custSheet);
   var billSheet = getOrCreateBillSheet(ss);
   ensureBranchColumn(billSheet);
+  ensureBillColourColumn(billSheet);
   var dropdownSheet = getOrCreateSheet(ss, "Dropdown", ["ID", "Type", "Value", "Created At"]);
   var purchaseSheet = getOrCreatePartsSheet(ss, "Parts Purchases");
   var saleSheet = getOrCreatePartsSheet(ss, "Parts Sales");
+  var vehicleStockSheet = ensureVehicleStockSheet(ss);
   ensureBranchColumn(purchaseSheet);
   ensureBranchColumn(saleSheet);
   var branchSheet = getOrCreateSheet(ss, "Branches", ["Branch"]);
@@ -52,6 +54,9 @@ function doGet(e) {
 
   var purchaseResult = sheetObjectsToRows(purchaseSheet);
   var saleResult = sheetObjectsToRows(saleSheet);
+  var vehicleStockResult = sheetObjectsToRows(vehicleStockSheet);
+  var branchBillsForStock = isMainBranch(authBranch) ? billResult : filterRowsByBranch(billResult, authBranch);
+  var branchStockForResponse = isMainBranch(authBranch) ? vehicleStockResult : filterRowsByBranch(vehicleStockResult, authBranch);
 
   return ContentService
     .createTextOutput(JSON.stringify({
@@ -59,6 +64,7 @@ function doGet(e) {
       bills: isMainBranch(authBranch) ? billResult : filterRowsByBranch(billResult, authBranch),
       purchases: filterRowsByBranch(purchaseResult, authBranch),
       sales: filterRowsByBranch(saleResult, authBranch),
+      vehicleStock: getAvailableVehicleStockFromRows(branchStockForResponse, branchBillsForStock),
       dropdowns: getDropdownData(dropdownSheet),
       branches: branchSheet.getDataRange().getDisplayValues().slice(1).map(function(row) { return String(row[0] || "").trim(); }).filter(Boolean),
       branch: authBranch
@@ -74,6 +80,72 @@ function doPost(e) {
     var authBranch = getAuthenticatedBranch(data.token);
     if (!authBranch) return jsonResponse({status:"error", message:"Session expired. Please log in again."});
     data.branch = authBranch;
+    if (data.action === "reconcile_saved_bill_stock") {
+      var savedBillSheet = getOrCreateBillSheet(SpreadsheetApp.getActiveSpreadsheet());
+      ensureBranchColumn(savedBillSheet);
+      ensureBillColourColumn(savedBillSheet);
+      var savedBillRows = savedBillSheet.getDataRange().getDisplayValues();
+      for (var sb = 1; sb < savedBillRows.length; sb++) {
+        var savedBill = savedBillRows[sb];
+        if (String(savedBill[0]).trim() === String(data.billId || "").trim() && (isMainBranch(authBranch) || normalizeBranch(savedBill[27]) === authBranch)) {
+          var soldVehicle = {item:savedBill[3], vehicleCompany:savedBill[4], vehicleModel:savedBill[5], chassisNo:savedBill[7], vehicleColour:savedBill[28]};
+          return jsonResponse({status:"success", stockAdjusted:consumeVehicleStockForBill(soldVehicle, authBranch)});
+        }
+      }
+      return jsonResponse({status:"error", message:"Saved bill not found."});
+    }
+    if (data.action === "get_vehicle_stock") {
+      return jsonResponse({status:"success", vehicleStock:getAvailableVehicleStock(SpreadsheetApp.getActiveSpreadsheet(), authBranch)});
+    }
+    if (data.action === "save_vehicle_stock" || data.action === "update_vehicle_stock" || data.action === "delete_vehicle_stock") {
+      var vehicleSheet = ensureVehicleStockSheet(SpreadsheetApp.getActiveSpreadsheet());
+      var vehicleRows = vehicleSheet.getDataRange().getDisplayValues();
+      var vehicleHeaders = vehicleRows[0].map(function(header) { return String(header).trim(); });
+      var targetVehicleRow = -1;
+      if (data.action !== "save_vehicle_stock") {
+        for (var vi = 1; vi < vehicleRows.length; vi++) {
+          if (String(vehicleRows[vi][vehicleHeaders.indexOf("ID")]).trim() === String(data.id || "").trim() && (isMainBranch(authBranch) || normalizeBranch(vehicleRows[vi][vehicleHeaders.indexOf("Branch")]) === authBranch)) { targetVehicleRow = vi + 1; break; }
+        }
+        if (targetVehicleRow < 0) return jsonResponse({status:"error", message:"Vehicle stock entry not found."});
+        if (data.action === "delete_vehicle_stock") {
+          vehicleSheet.deleteRow(targetVehicleRow);
+          return jsonResponse({status:"success"});
+        }
+      }
+      var billNo = String(data.billNo || "").trim().toUpperCase();
+      var vehicleName = String(data.vehicleName || "").trim().toUpperCase();
+      var vehicleCompany = String(data.vehicleCompany || "").trim().toUpperCase();
+      var vehicleModel = String(data.vehicleModel || "").trim().toUpperCase();
+      var vehicleColour = String(data.vehicleColour || "").trim().toUpperCase();
+      var chassisNo = String(data.chassisNo || "").trim().toUpperCase();
+      var engineNo = String(data.engineNo || "").trim().toUpperCase();
+      var costPrice = Number(data.costPrice);
+      var cgst = Number(data.cgst) || 0;
+      var sgst = Number(data.sgst) || 0;
+      var igst = Number(data.igst) || 0;
+      if (!billNo || !vehicleName || !vehicleCompany || !vehicleModel || !vehicleColour || !chassisNo || !engineNo) return jsonResponse({status:"error", message:"Fill in all vehicle stock fields."});
+      if ([billNo, vehicleName, vehicleCompany, vehicleModel, vehicleColour, chassisNo, engineNo].some(function(value) { return value.length > 100; })) return jsonResponse({status:"error", message:"Each text field must be 100 characters or fewer."});
+      var chassisColumn = vehicleHeaders.indexOf("Chassis No");
+      var engineColumn = vehicleHeaders.indexOf("Engine No");
+      for (var duplicateRow = 1; duplicateRow < vehicleRows.length; duplicateRow++) {
+        if (targetVehicleRow === duplicateRow + 1) continue;
+        var existingChassis = String(vehicleRows[duplicateRow][chassisColumn] || "").trim().toUpperCase();
+        var existingEngine = String(vehicleRows[duplicateRow][engineColumn] || "").trim().toUpperCase();
+        if (chassisNo === existingChassis || engineNo === existingEngine) return jsonResponse({status:"error", message:"Already exist: this Chassis No or Engine No is already in stock."});
+      }
+      if (String(data.costPrice == null ? "" : data.costPrice).trim() === "" || !isFinite(costPrice) || costPrice < 0 || cgst < 0 || sgst < 0 || igst < 0) return jsonResponse({status:"error", message:"Enter valid non-negative price and GST values."});
+      var totalCostPrice = costPrice * (1 + (cgst + sgst + igst) / 100);
+      var stockDate = String(data.date || "").trim();
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(stockDate)) return jsonResponse({status:"error", message:"Enter a valid stock date."});
+      var stockRecord = {"Date":stockDate, "Bill No":billNo, "Vehicle Name":vehicleName, "Vehicle Company":vehicleCompany, "Vehicle Model":vehicleModel, "Vehicle Colour":vehicleColour, "Chassis No":chassisNo, "Engine No":engineNo, "Cost Price":costPrice, "CGST":cgst, "SGST":sgst, "IGST":igst, "Total Cost Price":totalCostPrice, "Branch":normalizeBranch(authBranch)};
+      if (data.action === "update_vehicle_stock") {
+        Object.keys(stockRecord).forEach(function(header) { var column = vehicleHeaders.indexOf(header); if (header !== "Branch" && column >= 0) vehicleSheet.getRange(targetVehicleRow, column + 1).setValue(stockRecord[header]); });
+      } else {
+        stockRecord.ID = "VS-" + new Date().getTime();
+        vehicleSheet.appendRow(vehicleHeaders.map(function(header) { return header === "ID" ? stockRecord.ID : (stockRecord[header] == null ? "" : stockRecord[header]); }));
+      }
+      return jsonResponse({status:"success"});
+    }
     if (data.action === "get_main_branch_credentials" || data.action === "update_main_branch_credentials") {
       if (!isMainBranch(authBranch)) return jsonResponse({status:"error", message:"Only Main Branch can manage these credentials."});
       var mainUsers = ensureBranchUserSheet();
@@ -168,6 +240,19 @@ function doPost(e) {
     if (data.action === "save_bill") {
       var billSheet = getOrCreateBillSheet(ss);
       ensureBranchColumn(billSheet);
+      ensureBillColourColumn(billSheet);
+      var billLock = LockService.getScriptLock();
+      billLock.waitLock(10000);
+      var existingBills = billSheet.getDataRange().getDisplayValues();
+      var duplicateBill = null;
+      for (var dbi = 1; dbi < existingBills.length; dbi++) {
+        if (sameBillForDuplicate(existingBills[dbi], data, authBranch)) { duplicateBill = String(existingBills[dbi][0] || ""); break; }
+      }
+      if (duplicateBill) {
+        consumeVehicleStockForBill(data, authBranch);
+        billLock.releaseLock();
+        return jsonResponse({status:"duplicate", message:"Already saved", invoiceNo:duplicateBill});
+      }
       var lastRow = billSheet.getLastRow();
 
       var nextInvNo = 1;
@@ -222,8 +307,11 @@ function doPost(e) {
         data.bankAccNo,
         data.bankBranch,
         formattedDate,
-        normalizeBranch(data.branch)
+        normalizeBranch(data.branch),
+        data.vehicleColour || ""
       ]);
+      consumeVehicleStockForBill(data, authBranch);
+      billLock.releaseLock();
 
       return ContentService
         .createTextOutput(JSON.stringify({
@@ -239,6 +327,7 @@ function doPost(e) {
       if (!isMainBranch(authBranch)) return jsonResponse({status:"error", message:"Only Main Branch can edit bills."});
       var billSheet = getOrCreateBillSheet(ss);
       ensureBranchColumn(billSheet);
+      ensureBillColourColumn(billSheet);
       var rows = billSheet.getDataRange().getValues();
       var updated = false;
 
@@ -251,7 +340,7 @@ function doPost(e) {
           var existingDate = rows[i][26];
 
           billSheet
-            .getRange(i + 1, 1, 1, 28)
+            .getRange(i + 1, 1, 1, 29)
             .setValues([[
               data.billId,
               data.custId,
@@ -280,7 +369,8 @@ function doPost(e) {
               data.bankAccNo,
               data.bankBranch,
               existingDate,
-              rows[i][27] || normalizeBranch(data.branch)
+              rows[i][27] || normalizeBranch(data.branch),
+              data.vehicleColour || rows[i][28] || ""
             ]]);
 
           updated = true;
@@ -490,7 +580,8 @@ function getOrCreateBillSheet(ss) {
       "Bank A/C No",
       "Bank Branch",
       "Date",
-      "Branch"
+      "Branch",
+      "Vehicle Colour"
     ]);
   }
 
@@ -556,6 +647,70 @@ function getOrCreateSheet(ss, name, headers) {
   if (!sheet) { sheet = ss.insertSheet(name); sheet.appendRow(headers); }
   return sheet;
 }
+function ensureVehicleStockSheet(ss) {
+  var headers = ["ID", "Date", "Bill No", "Vehicle Name", "Vehicle Company", "Vehicle Model", "Vehicle Colour", "Chassis No", "Engine No", "Cost Price", "CGST", "SGST", "IGST", "Total Cost Price", "Branch"];
+  var sheet = getOrCreateSheet(ss, "Vehicle Stock", headers);
+  var existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0].map(function(value) { return String(value).trim(); });
+  headers.forEach(function(header) { if (existing.indexOf(header) === -1) { sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header); existing.push(header); } });
+  return sheet;
+}
+function getAvailableVehicleStock(ss, branch) {
+  var stockSheet = ensureVehicleStockSheet(ss);
+  var billSheet = getOrCreateBillSheet(ss);
+  ensureBranchColumn(billSheet);
+  ensureBillColourColumn(billSheet);
+  var stocks = sheetObjectsToRows(stockSheet);
+  var bills = sheetObjectsToRows(billSheet);
+  if (!isMainBranch(branch)) {
+    stocks = filterRowsByBranch(stocks, branch);
+    bills = filterRowsByBranch(bills, branch);
+  }
+  return getAvailableVehicleStockFromRows(stocks, bills);
+}
+function getAvailableVehicleStockFromRows(stocks, bills) {
+  var soldIndexes = {};
+  bills.forEach(function(bill) {
+    if (String(bill.Item || "").trim().toLowerCase().indexOf("scooty") === -1) return;
+    var chassis = String(bill["Chassis No"] || "").trim().toLowerCase();
+    var company = String(bill["Vehicle Company"] || "").trim().toLowerCase();
+    var model = String(bill["Vehicle Model"] || "").trim().toLowerCase();
+    var colour = String(bill["Vehicle Colour"] || "").trim().toLowerCase();
+    var match = -1;
+    if (chassis) match = stocks.findIndex(function(stock, index) { return !soldIndexes[index] && String(stock["Chassis No"] || "").trim().toLowerCase() === chassis; });
+    if (match < 0 && !chassis && company && model) match = stocks.findIndex(function(stock, index) {
+      return !soldIndexes[index] && (!company || String(stock["Vehicle Company"] || "").trim().toLowerCase() === company) && (!model || String(stock["Vehicle Model"] || "").trim().toLowerCase() === model) && (!colour || String(stock["Vehicle Colour"] || "").trim().toLowerCase() === colour);
+    });
+    if (match >= 0) soldIndexes[match] = true;
+  });
+  return stocks.filter(function(stock, index) { return !soldIndexes[index]; });
+}
+function consumeVehicleStockForBill(data, authBranch) {
+  if (String(data.item || "").trim().toLowerCase().indexOf("scooty") === -1) return false;
+  var chassisNo = String(data.chassisNo || "").trim().toLowerCase();
+  var sheet = ensureVehicleStockSheet(SpreadsheetApp.getActiveSpreadsheet());
+  var rows = sheet.getDataRange().getDisplayValues();
+  var headers = rows[0].map(function(header) { return String(header).trim(); });
+  var index = {chassis:headers.indexOf("Chassis No"), company:headers.indexOf("Vehicle Company"), model:headers.indexOf("Vehicle Model"), colour:headers.indexOf("Vehicle Colour"), branch:headers.indexOf("Branch")};
+  for (var i = 1; i < rows.length; i++) {
+    var row = rows[i];
+    var sameBranch = isMainBranch(authBranch) || normalizeBranch(row[index.branch]) === authBranch;
+    var sameChassis = chassisNo && String(row[index.chassis] || "").trim().toLowerCase() === chassisNo;
+    var sameVehicle = data.vehicleCompany && data.vehicleModel && String(row[index.company] || "").trim().toLowerCase() === String(data.vehicleCompany).trim().toLowerCase() && String(row[index.model] || "").trim().toLowerCase() === String(data.vehicleModel).trim().toLowerCase() && (!data.vehicleColour || String(row[index.colour] || "").trim().toLowerCase() === String(data.vehicleColour).trim().toLowerCase());
+    if ((sameChassis || (!chassisNo && sameVehicle)) && sameBranch) {
+      sheet.deleteRow(i + 1);
+      return true;
+    }
+  }
+  if (chassisNo) {
+    for (var j = 1; j < rows.length; j++) {
+      var fallback = rows[j];
+      var sameBranchFallback = isMainBranch(authBranch) || normalizeBranch(fallback[index.branch]) === authBranch;
+      var sameVehicleFallback = data.vehicleCompany && data.vehicleModel && String(fallback[index.company] || "").trim().toLowerCase() === String(data.vehicleCompany).trim().toLowerCase() && String(fallback[index.model] || "").trim().toLowerCase() === String(data.vehicleModel).trim().toLowerCase() && (!data.vehicleColour || String(fallback[index.colour] || "").trim().toLowerCase() === String(data.vehicleColour).trim().toLowerCase());
+      if (sameVehicleFallback && sameBranchFallback) { sheet.deleteRow(j + 1); return true; }
+    }
+  }
+  return false;
+}
 
 function seedDropdownDefaults(sheet) {
   var defaults = {
@@ -612,6 +767,31 @@ function sheetObjectsToRows(sheet) {
 }
 
 function jsonResponse(obj) { return ContentService.createTextOutput(JSON.stringify(obj)).setMimeType(ContentService.MimeType.JSON); }
+function normalizeBillDuplicateValue(value, numeric) {
+  if (numeric) {
+    var parsed = parseFloat(String(value == null ? "" : value).replace(/[^0-9.-]+/g, ""));
+    return isNaN(parsed) ? "0" : String(parsed);
+  }
+  return String(value == null ? "" : value).trim().toLowerCase();
+}
+function ensureBillColourColumn(sheet) {
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0].map(function(header) { return String(header).trim(); });
+  if (headers.indexOf("Vehicle Colour") === -1) sheet.getRange(1, headers.length + 1).setValue("Vehicle Colour");
+}
+function sameBillForDuplicate(row, data, branch) {
+  var fields = [
+    [1, data.custId], [2, data.customerName], [3, data.item], [4, data.vehicleCompany],
+    [5, data.vehicleModel], [6, data.hsn], [7, data.chassisNo], [8, data.engineNo],
+    [9, data.quantity, true], [10, data.rate, true], [11, data.amount, true],
+    [12, data.sgst, true], [13, data.cgst, true], [14, data.igst, true], [15, data.totalAmount, true],
+    [16, data.batteryDetails], [17, data.batteryWarranty], [18, data.batterySerialNo],
+    [19, data.charger], [20, data.chargerSerialNo], [21, data.bankName], [22, data.bankIfsc],
+    [23, data.bankAccName], [24, data.bankAccNo], [25, data.bankBranch]
+  ];
+  fields.push([28, data.vehicleColour]);
+  if (normalizeBillDuplicateValue(row[27], false) !== normalizeBillDuplicateValue(branch, false)) return false;
+  return fields.every(function(field) { return normalizeBillDuplicateValue(row[field[0]], field[2]) === normalizeBillDuplicateValue(field[1], field[2]); });
+}
 function filterRowsByBranch(rows, branch) {
   return (rows || []).filter(function(row) { return normalizeBranch(row.Branch) === branch; });
 }

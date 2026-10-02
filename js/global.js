@@ -1,11 +1,14 @@
 // Paste your NEW deployed Google Apps Script Web App URL here!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBbxSSXfzBss8D_EEqAE_2L30Bfknl5j2IVCXfxil4ksm_JNn3Y36jZtE7rMEeXgwBYA/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzX-JK4BZf9lhwKL1ClbCGgp4-LU5oDQvFTFmFUu7N_VszPK2gmtVrgmRm6Klxol46mJQ/exec";
 
 // Global Variables
 let customerDataList = [];
 let billDataList = []; 
 let partsPurchaseList = [];
 let partsSaleList = [];
+let vehicleStockList = [];
+let mainDataLoaded = false;
+let mainDataPromise = null;
 let currentBillCustomerObj = null;
 let savedBankDetails = {};
 let currentFilter = "all";
@@ -222,7 +225,6 @@ document.addEventListener("DOMContentLoaded", function () {
     });
   });
 
-  loadCustomers();
   handleRouteFromHash();
 });
 
@@ -232,23 +234,30 @@ function handleRouteFromHash() {
 
   // ---- Spare Parts (in-place render, no fetch needed) ----
   if (hash === "spareParts-purchase") {
-    renderPageWithLoader(() => {
-      if (typeof renderPartsSection === "function") renderPartsSection("purchase");
-    });
+    renderWhenDataReady(hash, () => { if (typeof renderPartsSection === "function") renderPartsSection("purchase"); });
     setActiveNav(hash);
     return;
   }
   if (hash === "spareParts-sale") {
-    renderPageWithLoader(() => {
-      if (typeof renderPartsSection === "function") renderPartsSection("sale");
-    });
+    renderWhenDataReady(hash, () => { if (typeof renderPartsSection === "function") renderPartsSection("sale"); });
     setActiveNav(hash);
     return;
   }
   if (hash === "spareParts-balance") {
-    renderPageWithLoader(() => {
-      if (typeof renderPartsBalanceReport === "function") renderPartsBalanceReport();
-    });
+    renderWhenDataReady(hash, () => { if (typeof renderPartsBalanceReport === "function") renderPartsBalanceReport(); });
+    setActiveNav(hash);
+    return;
+  }
+  if (hash === "stock-report") {
+    setActiveNav(hash);
+    renderWhenDataReady(hash, () => renderVehicleStockReport());
+    return;
+  }
+  if (hash === "stock-management") {
+    const loaderRequestId = showPageLoader();
+    (mainDataLoaded ? Promise.resolve() : loadVehicleStockData()).then(() => {
+      if (location.hash.replace("#", "") === "stock-management" && typeof renderVehicleStock === "function") renderVehicleStock();
+    }).catch(error => { if (location.hash.replace("#", "") === "stock-management") document.getElementById("app-content").innerHTML = `<section class="content-section"><h1>Stock Management</h1><p>${escapeHtml(error.message || "Could not load stock.")}</p></section>`; }).finally(() => hidePageLoader(loaderRequestId));
     setActiveNav(hash);
     return;
   }
@@ -270,6 +279,19 @@ function handleRouteFromHash() {
     loadPage('Dashboard/dashboard.html', 'dashboard', 'all', false);
     setActiveNav("dashboard");
   }
+}
+
+function renderWhenDataReady(expectedHash, renderPage) {
+  if (mainDataLoaded) {
+    renderPageWithLoader(renderPage);
+    return;
+  }
+  const loaderRequestId = showPageLoader();
+  loadCustomers().then(() => {
+    if (location.hash.replace("#", "") === expectedHash) renderPage();
+  }).catch(error => {
+    if (location.hash.replace("#", "") === expectedHash) document.getElementById("app-content").innerHTML = `<section class="content-section"><p>${escapeHtml(error.message || "Could not load data.")}</p></section>`;
+  }).finally(() => hidePageLoader(loaderRequestId));
 }
 
 // ✅ Active nav-link highlight + matching submenu open/close (class-based, single source of truth)
@@ -309,7 +331,7 @@ let pageLoadRequestId = 0;
 let pageLoaderRequestId = 0;
 let pageLoaderStartedAt = 0;
 let pageLoaderTimer = null;
-const minimumPageLoaderDuration = 500;
+const minimumPageLoaderDuration = 160;
 
 function showPageLoader() {
   const loader = document.getElementById("page-loader");
@@ -348,13 +370,16 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
   const loaderRequestId = showPageLoader();
   try {
     let html = pageTemplateCache.get(pageUrl);
-    if (!html) {
-      const cacheUrl = context === "dashboard" ? `${pageUrl}?v=2` : pageUrl;
+    const templatePromise = html ? Promise.resolve(html) : (async () => {
+      const cacheUrl = context === "dashboard" ? `${pageUrl}?v=3` : pageUrl;
       const response = await fetch(cacheUrl, { cache: "no-cache" });
       if (!response.ok) throw new Error(`Page request failed: ${response.status}`);
-      html = await response.text();
-      pageTemplateCache.set(pageUrl, html);
-    }
+      const template = await response.text();
+      pageTemplateCache.set(pageUrl, template);
+      return template;
+    })();
+    const [loadedHtml] = await Promise.all([templatePromise, mainDataLoaded ? Promise.resolve() : loadCustomers()]);
+    html = loadedHtml;
     if (requestId !== pageLoadRequestId) return;
     document.getElementById("app-content").innerHTML = html;
     currentFilter = filterValue;
@@ -386,30 +411,66 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
 };
 
 // Data Fetching
-window.loadCustomers = async function(forceReload = false) {
-  try {
-    const res = await apiFetch(APPS_SCRIPT_URL);
-    const data = await res.json();
-    if (data.status === "error") { logout(); return; }
-    currentBranch = data.branch || currentBranch;
-    availableBranches = data.branches || ["Main Branch"];
-    const branchLabel = document.getElementById("current-branch-label");
-    if (branchLabel) branchLabel.textContent = currentBranch;
-    customerDataList = data.customers || [];
-    billDataList = data.bills || [];
-    partsPurchaseList = data.purchases || [];
-    partsSaleList = data.sales || [];
-    window.dropdownDataList = data.dropdowns || [];
-    if (window.refreshDropdownOptions) window.refreshDropdownOptions();
+window.loadVehicleStockData = async function() {
+  const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"get_vehicle_stock"})});
+  const result = await response.json();
+  if (!response.ok || result.status !== "success") throw new Error(result.message || "Could not load vehicle stock.");
+  vehicleStockList = result.vehicleStock || [];
+};
 
-    if (document.getElementById("dashboard-section")) updateDashboardCounts();
-    if (document.getElementById("bill-generate-section")) renderBillCustomerTable([...customerDataList].reverse());
-    if (document.getElementById("report-section")) generateReport();
-  } catch (err) { console.error("Failed to load data."); }
+window.loadCustomers = function(forceReload = false) {
+  if (mainDataLoaded && !forceReload) return Promise.resolve();
+  if (mainDataPromise) return mainDataPromise;
+  mainDataPromise = (async () => {
+    try {
+      const res = await apiFetch(APPS_SCRIPT_URL);
+      const data = await res.json();
+      if (data.status === "error") {
+        if (/session expired/i.test(data.message || "")) logout();
+        throw new Error(data.message || "Could not load data.");
+      }
+      currentBranch = data.branch || currentBranch;
+      availableBranches = data.branches || ["Main Branch"];
+      const branchLabel = document.getElementById("current-branch-label");
+      if (branchLabel) branchLabel.textContent = currentBranch;
+      customerDataList = data.customers || [];
+      billDataList = data.bills || [];
+      partsPurchaseList = data.purchases || [];
+      partsSaleList = data.sales || [];
+      vehicleStockList = data.vehicleStock || [];
+      mainDataLoaded = true;
+      window.dropdownDataList = data.dropdowns || [];
+      if (window.refreshDropdownOptions) window.refreshDropdownOptions();
+      if (document.getElementById("dashboard-section")) updateDashboardCounts();
+      if (document.getElementById("bill-generate-section")) renderBillCustomerTable([...customerDataList].reverse());
+      if (document.getElementById("report-section")) generateReport();
+    } catch (error) {
+      console.error("Failed to load data:", error);
+      throw error;
+    } finally {
+      mainDataPromise = null;
+    }
+  })();
+  return mainDataPromise;
 };
 
 window.escapeHtml = function(value) {
   return String(value).replace(/[&<>"']/g, char => ({"&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"}[char]));
+};
+
+window.getAvailableVehicleStockList = function() {
+  const soldIndexes = new Set();
+  (billDataList || []).forEach(bill => {
+    if (!String(bill.Item || "").trim().toLowerCase().includes("scooty")) return;
+    const chassis = String(bill["Chassis No"] || "").trim().toLowerCase();
+    const company = String(bill["Vehicle Company"] || "").trim().toLowerCase();
+    const model = String(bill["Vehicle Model"] || "").trim().toLowerCase();
+    const colour = String(bill["Vehicle Colour"] || "").trim().toLowerCase();
+    let index = vehicleStockList.findIndex((stock, i) => !soldIndexes.has(i) && chassis && String(stock["Chassis No"] || "").trim().toLowerCase() === chassis);
+    if (index < 0 && !chassis && company && model) index = vehicleStockList.findIndex((stock, i) => !soldIndexes.has(i) && String(stock["Vehicle Company"] || "").trim().toLowerCase() === company && String(stock["Vehicle Model"] || "").trim().toLowerCase() === model && (!colour || String(stock["Vehicle Colour"] || "").trim().toLowerCase() === colour));
+    if (index >= 0) soldIndexes.add(index);
+  });
+  return (vehicleStockList || []).filter((stock, index) => !soldIndexes.has(index));
 };
 
 // Shared Helper Functions

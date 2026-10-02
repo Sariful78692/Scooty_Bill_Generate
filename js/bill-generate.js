@@ -113,7 +113,8 @@ window.openBillCreatePage = function(custId) {
   
   document.getElementById("billItem").value = cust["Vehicle"] || "";
   
-  // ✅ Company Dropdown Setup
+  populateBillStockCompanies();
+  // Company dropdown setup
   const compSelect = document.getElementById("billCompany");
   const cVal = (cust["Vehicle Company"] || "").trim().toUpperCase();
   if (compSelect) {
@@ -121,13 +122,17 @@ window.openBillCreatePage = function(custId) {
     compSelect.value = cVal;
   }
 
-  // ✅ Model Dropdown Setup
+  handleStockCompanyChange((cust["Vehicle Model"] || "").trim().toUpperCase());
+  // Model dropdown setup
   const modelSelect = document.getElementById("billModel");
   const mVal = (cust["Vehicle Model"] || "").trim().toUpperCase();
   if (modelSelect) {
     if (mVal && !Array.from(modelSelect.options).some(o => o.value === mVal)) modelSelect.add(new Option(mVal, mVal));
     modelSelect.value = mVal;
   }
+
+  handleStockModelChange("");
+  document.getElementById("billColour").value = "";
 
   document.getElementById("billChassis").value = cust["Chassis Number"] || "";
   document.getElementById("billEngine").value = cust["Engine Number"] || "";
@@ -139,6 +144,73 @@ window.openBillCreatePage = function(custId) {
   document.getElementById("print-bill-btn").classList.add("hidden");
   document.getElementById("save-bill-btn").innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Save Bill`;
   toggleBillViews('create');
+};
+
+function setBillSelectOptions(select, values, placeholder, selectedValue = "") {
+  if (!select) return;
+  const selected = String(selectedValue || "").trim();
+  const uniqueValues = Array.from(new Set((values || []).map(value => String(value || "").trim()).filter(Boolean)));
+  if (selected && !uniqueValues.some(value => value.toLowerCase() === selected.toLowerCase())) uniqueValues.push(selected);
+  select.innerHTML = `<option value="">${placeholder}</option>`;
+  uniqueValues.forEach(value => select.add(new Option(value, value)));
+  select.value = uniqueValues.find(value => value.toLowerCase() === selected.toLowerCase()) || "";
+}
+
+function stockVehiclesForSelection() {
+  if (!String(document.getElementById("billItem")?.value || "").trim().toLowerCase().includes("scooty")) return [];
+  return (vehicleStockList || []).filter(vehicle =>
+    String(vehicle["Vehicle Company"] || "").trim().toLowerCase() === String(document.getElementById("billCompany")?.value || "").trim().toLowerCase() &&
+    String(vehicle["Vehicle Model"] || "").trim().toLowerCase() === String(document.getElementById("billModel")?.value || "").trim().toLowerCase()
+  );
+}
+
+function populateBillStockCompanies(selectedValue = "") {
+  const catalog = JSON.parse(localStorage.getItem("daduBillCatalog_companies") || "[]");
+  const stockCompanies = (vehicleStockList || []).map(vehicle => vehicle["Vehicle Company"]);
+  setBillSelectOptions(document.getElementById("billCompany"), catalog.concat(stockCompanies), "Select Company", selectedValue);
+}
+
+window.handleStockCompanyChange = function(modelValue = "") {
+  const company = document.getElementById("billCompany")?.value || "";
+  const stockModels = (vehicleStockList || []).filter(vehicle => String(vehicle["Vehicle Company"] || "").trim().toLowerCase() === company.trim().toLowerCase()).map(vehicle => vehicle["Vehicle Model"]);
+  const catalogModels = JSON.parse(localStorage.getItem("daduBillCatalog_models") || "[]");
+  const customerModel = currentBillCustomerObj?.["Vehicle Company"]?.trim().toLowerCase() === company.trim().toLowerCase() ? [currentBillCustomerObj["Vehicle Model"]] : [];
+  setBillSelectOptions(document.getElementById("billModel"), [...catalogModels, ...stockModels, ...customerModel], "Select Model", modelValue);
+  handleStockModelChange();
+};
+
+window.handleStockModelChange = function(colourValue = "") {
+  const colours = stockVehiclesForSelection().map(vehicle => vehicle["Vehicle Colour"]);
+  if (String(document.getElementById("billItem")?.value || "").trim().toLowerCase().includes("scooty")) {
+    document.getElementById("billChassis").value = "";
+    document.getElementById("billEngine").value = "";
+  }
+  const currentColour = colourValue || "";
+  setBillSelectOptions(document.getElementById("billColour"), colours, "Select Colour", currentColour);
+  handleStockColourChange();
+};
+
+window.handleStockColourChange = function(chassisValue = "") {
+  const colour = document.getElementById("billColour")?.value || "";
+  const matches = stockVehiclesForSelection().filter(vehicle => String(vehicle["Vehicle Colour"] || "").trim().toLowerCase() === colour.trim().toLowerCase());
+  const datalist = document.getElementById("bill-stock-chassis-options");
+  if (datalist) datalist.innerHTML = matches.map(vehicle => `<option value="${escapeHtml(vehicle["Chassis No"] || "")}"></option>`).join("");
+  const chassisInput = document.getElementById("billChassis");
+  const selectedChassis = chassisValue || chassisInput?.value || "";
+  const vehicle = matches.find(item => String(item["Chassis No"] || "").trim().toLowerCase() === selectedChassis.trim().toLowerCase()) || matches[0];
+  if (vehicle && chassisInput) {
+    chassisInput.value = vehicle["Chassis No"] || "";
+    document.getElementById("billEngine").value = vehicle["Engine No"] || "";
+  } else if (String(document.getElementById("billItem")?.value || "").trim().toLowerCase().includes("scooty")) {
+    if (chassisInput) chassisInput.value = "";
+    document.getElementById("billEngine").value = "";
+  }
+};
+
+window.handleStockChassisChange = function() {
+  const chassis = document.getElementById("billChassis")?.value || "";
+  const vehicle = stockVehiclesForSelection().find(item => String(item["Vehicle Colour"] || "").trim().toLowerCase() === String(document.getElementById("billColour")?.value || "").trim().toLowerCase() && String(item["Chassis No"] || "").trim().toLowerCase() === chassis.trim().toLowerCase());
+  if (vehicle) document.getElementById("billEngine").value = vehicle["Engine No"] || "";
 };
 
 // ================= COMPANY & MODEL ADD METHODS (নতুন) =================
@@ -288,17 +360,6 @@ window.saveBillToDatabase = async function() {
   const existingBillId = billIdInput ? billIdInput.value : "";
   const totalAmount = document.getElementById("billTotal").value;
 
-  if (!existingBillId) {
-    const isDuplicate = billDataList.find(b => String(b["Customer ID"]).trim() === String(custId).trim() && parseFloat(String(b["Total Amount"]).replace(/[^0-9.-]+/g, "")) === parseFloat(totalAmount));
-    if (isDuplicate) {
-      alert("This bill is already saved! You can directly print it.");
-      document.getElementById("invNo").innerText = isDuplicate["Bill ID"];
-      document.getElementById("activeBillId").value = isDuplicate["Bill ID"];
-      document.getElementById("print-bill-btn").classList.remove("hidden");
-      return; 
-    }
-  }
-
   const selectedBank = document.getElementById("billBankSelect").value;
   let bIfsc = "", bName = "", bAcc = "", bBranch = "";
   if (selectedBank && savedBankDetails[selectedBank]) {
@@ -318,6 +379,7 @@ window.saveBillToDatabase = async function() {
     action: existingBillId ? "update_bill" : "save_bill", billId: existingBillId, branch: currentBranch, custId: custId,
     customerName: currentBillCustomerObj["Customer Name"], item: document.getElementById("billItem").value, 
     vehicleCompany: document.getElementById("billCompany").value, vehicleModel: document.getElementById("billModel").value,
+    vehicleColour: document.getElementById("billColour").value,
     hsn: document.getElementById("billHsn").value, chassisNo: document.getElementById("billChassis").value, 
     engineNo: document.getElementById("billEngine").value, quantity: document.getElementById("billQnty").value, 
     rate: document.getElementById("billRate").value, amount: document.getElementById("billAmount").value, 
@@ -328,7 +390,49 @@ window.saveBillToDatabase = async function() {
     charger: document.getElementById("billCharger")?.value || "", chargerSerialNo: document.getElementById("billChargerSerial")?.value || "", 
     bankName: selectedBank, bankIfsc: bIfsc, bankAccName: bName, bankAccNo: bAcc, bankBranch: bBranch
   };
+
+  if (!existingBillId) {
+    const fieldsToCompare = [
+      ["Customer ID", custId], ["Customer Name", payload.customerName], ["Item", payload.item],
+      ["Vehicle Company", payload.vehicleCompany], ["Vehicle Model", payload.vehicleModel], ["Vehicle Colour", payload.vehicleColour], ["HSN", payload.hsn],
+      ["Chassis No", payload.chassisNo], ["Engine No", payload.engineNo], ["Quantity", payload.quantity, true],
+      ["Rate", payload.rate, true], ["Amount", payload.amount, true], ["SGST", payload.sgst, true],
+      ["CGST", payload.cgst, true], ["IGST", payload.igst, true], ["Total Amount", payload.totalAmount, true],
+      ["Battery Details", payload.batteryDetails], ["Battery Warranty", payload.batteryWarranty],
+      ["Battery Serial No", payload.batterySerialNo], ["Charger", payload.charger],
+      ["Charger Serial No", payload.chargerSerialNo], ["Bank Name", payload.bankName],
+      ["Bank IFSC", payload.bankIfsc], ["Bank A/C Name", payload.bankAccName],
+      ["Bank A/C No", payload.bankAccNo], ["Bank Branch", payload.bankBranch]
+    ];
+    const normalizeDuplicateValue = (value, numeric) => {
+      if (numeric) {
+        const parsed = parseFloat(String(value ?? "").replace(/[^0-9.-]+/g, ""));
+        return Number.isFinite(parsed) ? String(parsed) : "0";
+      }
+      return String(value ?? "").trim().toLowerCase();
+    };
+    const duplicate = billDataList.find(bill =>
+      String(bill["Branch"] || "Main Branch").trim().toLowerCase() === String(currentBranch || "Main Branch").trim().toLowerCase() &&
+      fieldsToCompare.every(([key, value, numeric]) => normalizeDuplicateValue(bill[key], numeric) === normalizeDuplicateValue(value, numeric))
+    );
+    if (duplicate) {
+      try {
+        const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"reconcile_saved_bill_stock", billId:duplicate["Bill ID"]})});
+        const result = await response.json();
+        if (result.status === "success" && result.stockAdjusted) await loadVehicleStockData();
+      } catch (_) {}
+      alert("Already saved");
+      return;
+    }
+  }
   
+  const saveButton = document.getElementById("save-bill-btn");
+  const originalSaveButtonHtml = saveButton?.innerHTML || "";
+  let saveSucceeded = false;
+  if (saveButton) {
+    saveButton.disabled = true;
+    saveButton.innerHTML = `<i class="fa-solid fa-spinner fa-spin" aria-hidden="true"></i> ${existingBillId ? "Updating..." : "Saving..."}`;
+  }
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000);
@@ -336,11 +440,17 @@ window.saveBillToDatabase = async function() {
     clearTimeout(timeoutId);
     if (!res.ok) throw new Error(`Server returned ${res.status}`);
     const result = await res.json();
+    if (result.status === "duplicate") {
+      alert(`Already saved${result.invoiceNo ? ` (Invoice No: ${result.invoiceNo})` : ""}`);
+      return;
+    }
     if (result.status === "success") {
+      saveSucceeded = true;
       const finalBillId = existingBillId || result.invoiceNo;
       showToast(existingBillId ? "Bill updated successfully!" : "Bill saved! Invoice No: " + finalBillId);
       document.getElementById("invNo").innerText = finalBillId;
       document.getElementById("activeBillId").value = finalBillId;
+      if (saveButton) saveButton.innerHTML = `<i class="fa-solid fa-floppy-disk"></i> Update Bill`;
       
       if (!existingBillId) {
         document.getElementById("print-bill-btn").classList.remove("hidden");
@@ -350,7 +460,14 @@ window.saveBillToDatabase = async function() {
 
       await loadCustomers(true); 
     } else alert("Failed to save bill.");
-  } catch (err) { alert("Error connecting to server."); }
+  } catch (err) {
+    alert("Error connecting to server.");
+  } finally {
+    if (saveButton) {
+      saveButton.disabled = false;
+      if (!saveSucceeded) saveButton.innerHTML = originalSaveButtonHtml;
+    }
+  }
 };
 
 window.editGeneratedBill = function(billId) {
@@ -365,20 +482,26 @@ window.editGeneratedBill = function(billId) {
   
   // ✅ Company Options Setup for Edit
   const cVal = (bill["Vehicle Company"] || "").trim().toUpperCase();
+  populateBillStockCompanies(cVal);
   const compSelect = document.getElementById("billCompany");
+  if (compSelect) compSelect.value = cVal;
   if(compSelect && cVal && !Array.from(compSelect.options).some(o => o.value === cVal)) compSelect.add(new Option(cVal, cVal));
 
   // ✅ Model Options Setup for Edit
   const mVal = (bill["Vehicle Model"] || "").trim().toUpperCase();
+  handleStockCompanyChange(mVal);
   const modelSelect = document.getElementById("billModel");
+  if (modelSelect) modelSelect.value = mVal;
+  handleStockModelChange(bill["Vehicle Colour"] || "");
   if(modelSelect && mVal && !Array.from(modelSelect.options).some(o => o.value === mVal)) modelSelect.add(new Option(mVal, mVal));
 
-  const fields = ["billItem","billCompany","billModel","billHsn","billChassis","billEngine","billQnty","billRate","billAmount","billSgst","billCgst","billIgst","billBattery","billWarranty","billBatterySerial","billCharger","billChargerSerial"];
-  const dbFields = ["Item","Vehicle Company","Vehicle Model","HSN","Chassis No","Engine No","Quantity","Rate","Amount","SGST","CGST","IGST","Battery Details","Battery Warranty","Battery Serial No","Charger","Charger Serial No"];
+  const fields = ["billItem","billCompany","billModel","billColour","billHsn","billChassis","billEngine","billQnty","billRate","billAmount","billSgst","billCgst","billIgst","billBattery","billWarranty","billBatterySerial","billCharger","billChargerSerial"];
+  const dbFields = ["Item","Vehicle Company","Vehicle Model","Vehicle Colour","HSN","Chassis No","Engine No","Quantity","Rate","Amount","SGST","CGST","IGST","Battery Details","Battery Warranty","Battery Serial No","Charger","Charger Serial No"];
   
   for(let i=0; i<fields.length; i++){
       if(document.getElementById(fields[i])) document.getElementById(fields[i]).value = bill[dbFields[i]] || "";
   }
+  handleStockColourChange(bill["Chassis No"] || "");
   document.getElementById("billTotal").value = String(bill["Total Amount"]).replace(/[^0-9.-]+/g, "") || "";
   
   const bankSelect = document.getElementById("billBankSelect");
@@ -459,7 +582,7 @@ function createDynamicTaxHTML(amount, cgstRate, sgstRate, igstRate) {
 }
 
 function createInvoiceRow(data) {
-  return `<tr><td><strong>${data.item}</strong><br><small>Company: ${data.company}</small><br><small>Model: ${data.model}</small><br><small>Chassis Number: ${data.chassis}</small><br><small>Motor Number: ${data.engine}</small></td><td style="text-align: center;">${data.hsn}</td><td style="text-align: center;">${data.quantity} PCS</td><td style="text-align: right;">₹${data.rate.toFixed(2)}</td><td style="text-align: right;">₹${data.amount.toFixed(2)}</td></tr>`;
+  return `<tr><td><strong>${data.item}</strong><br><small>Company: ${data.company}</small><br><small>Model: ${data.model}</small><br><small>Colour: ${data.colour || "-"}</small><br><small>Chassis Number: ${data.chassis}</small><br><small>Motor Number: ${data.engine}</small></td><td style="text-align: center;">${data.hsn}</td><td style="text-align: center;">${data.quantity} PCS</td><td style="text-align: right;">₹${data.rate.toFixed(2)}</td><td style="text-align: right;">₹${data.amount.toFixed(2)}</td></tr>`;
 }
 
 function showInvoiceAndPrint() {
@@ -524,7 +647,7 @@ window.printExistingBill = function (billId) {
   const total = roundMoney(amount + totalGstAmount);
 
   const tableBody = document.getElementById("invTableBody");
-  if (tableBody) tableBody.innerHTML = createInvoiceRow({ item: bill["Item"] || "-", company: bill["Vehicle Company"] || "-", model: bill["Vehicle Model"] || "-", chassis: bill["Chassis No"] || "-", engine: bill["Engine No"] || "-", hsn: bill["HSN"] || "-", quantity, rate, amount });
+  if (tableBody) tableBody.innerHTML = createInvoiceRow({ item: bill["Item"] || "-", company: bill["Vehicle Company"] || "-", model: bill["Vehicle Model"] || "-", colour: bill["Vehicle Colour"] || "-", chassis: bill["Chassis No"] || "-", engine: bill["Engine No"] || "-", hsn: bill["HSN"] || "-", quantity, rate, amount });
 
   const taxBox = document.getElementById("taxBreakdownList");
   if (taxBox) taxBox.innerHTML = createDynamicTaxHTML(amount, cgst, sgst, igst);

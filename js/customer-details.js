@@ -50,7 +50,9 @@ window.renderCustomerTable = function(list) {
   const startIndex = (customerCurrentPage - 1) * pageSize;
   list = list.slice(startIndex, startIndex + pageSize);
   const pagination = document.getElementById("customer-pagination");
-  if (pagination) pagination.innerHTML = `<span>Page ${customerCurrentPage} of ${pageCount}</span><button type="button" class="btn-primary" onclick="changeCustomerPage(-1)" ${customerCurrentPage <= 1 ? "disabled" : ""}>Previous</button><button type="button" class="btn-primary" onclick="changeCustomerPage(1)" ${customerCurrentPage >= pageCount ? "disabled" : ""}>Next</button>`;
+  const rangeStart = list.length ? startIndex + 1 : 0;
+  const rangeEnd = list.length ? startIndex + list.length : 0;
+  if (pagination) pagination.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border:1px solid #dbe3ee;border-radius:10px;background:#f8fafc;color:#526783;"><label style="display:flex;align-items:center;gap:10px;">Customers per page <select id="customerPageSize" onchange="changeCustomerPageSize(this.value)" style="padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;background:white;"><option value="10" ${limit === "10" ? "selected" : ""}>10</option><option value="25" ${limit === "25" ? "selected" : ""}>25</option><option value="50" ${limit === "50" ? "selected" : ""}>50</option><option value="100" ${limit === "100" ? "selected" : ""}>100</option><option value="all" ${limit === "all" ? "selected" : ""}>All</option></select></label><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span>Showing ${rangeStart}–${rangeEnd} of ${customerFilteredRows.length}</span><button type="button" class="btn-secondary" onclick="changeCustomerPage(-1)" ${customerCurrentPage <= 1 ? "disabled" : ""}>Previous</button><button type="button" class="btn-secondary" onclick="changeCustomerPage(1)" ${customerCurrentPage >= pageCount ? "disabled" : ""}>Next</button></div></div>`;
   
   thead.innerHTML = `<tr><th>Photo</th><th>Name</th><th>Mobile</th><th>Vehicle</th><th>Company</th><th>Model</th><th>Actions</th></tr>`;
   tbody.innerHTML = "";
@@ -59,6 +61,12 @@ window.renderCustomerTable = function(list) {
     tbody.innerHTML = `<tr><td colspan="7" class="text-center">No customers found.</td></tr>`; 
     return; 
   }
+
+  const billsByCustomerId = new Map();
+  (billDataList || []).forEach(bill => {
+    const customerId = String(bill["Customer ID"] || "").trim();
+    if (customerId) billsByCustomerId.set(customerId, bill);
+  });
   
   list.forEach(cust => {
     const tr = document.createElement("tr");
@@ -68,7 +76,7 @@ window.renderCustomerTable = function(list) {
         : `<i class="fa-solid fa-user-circle fa-2x" style="color: #cbd5e1;"></i>`;
 
     // 1. "Bills" ডাটাবেস থেকে কাস্টমারের বিল খোঁজা হচ্ছে
-    const custBills = billDataList.filter(b => String(b["Customer ID"]).trim() === String(cust["ID"]).trim());
+    const latestBill = billsByCustomerId.get(String(cust["ID"] || "").trim());
     
     // 2. পেন্ডিং ব্যাজ ডিজাইন
     const pendingBadge = `<span style="color: #d97706; font-size: 11px; font-weight: 700; background: #fef3c7; padding: 3px 6px; border-radius: 4px; display: inline-block; white-space: nowrap;">Pending Generate Bill</span>`;
@@ -77,8 +85,7 @@ window.renderCustomerTable = function(list) {
     let modelText = pendingBadge;
 
     // 3. যদি Bills পেজে ডেটা থাকে, তবে সেখান থেকে Company এবং Model টেনে আনা হবে
-    if (custBills.length > 0) {
-      const latestBill = custBills[custBills.length - 1]; // কাস্টমারের সর্বশেষ বিলটি নেওয়া হলো
+    if (latestBill) {
       
       compText = String(latestBill["Vehicle Company"] || "").trim();
       modelText = String(latestBill["Vehicle Model"] || "").trim();
@@ -108,6 +115,15 @@ window.renderCustomerTable = function(list) {
 window.changeCustomerPage = function(delta) {
   customerCurrentPage += delta;
   renderCustomerTable(customerFilteredRows);
+};
+
+window.changeCustomerPageSize = function(value) {
+  let filtered = currentFilter !== "all" ? customerDataList.filter(c => (c["Vehicle"] || "").trim() === currentFilter) : customerDataList;
+  const query = document.getElementById("customerSearchInput")?.value.toLowerCase().trim() || "";
+  if (query) filtered = filtered.filter(c => String(c["Customer Name"] || "").toLowerCase().includes(query) || String(c["Mobile No"] || "").toLowerCase().includes(query));
+  const reversed = [...filtered].reverse();
+  customerCurrentPage = 1;
+  renderCustomerTable(reversed);
 };
 
 window.editCustomer = function(id) {

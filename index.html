@@ -8,7 +8,7 @@
 
   <!-- FontAwesome & Chart.js -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js" defer></script>
 
   <!-- Modular CSS Files -->
   <link rel="stylesheet" href="css/global.css">
@@ -61,6 +61,13 @@
         </li>
         <li class="nav-item">
           <a href="#report" class="nav-link"><i class="fa-solid fa-file-lines"></i> Daily Report</a>
+        </li>
+        <li class="nav-item has-submenu">
+          <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-warehouse"></i> Stock Management <i class="fa-solid fa-chevron-down arrow"></i></a>
+          <ul class="submenu">
+            <li><a href="#stock-management">Stock Entry</a></li>
+            <li><a href="#stock-report">Stock Report</a></li>
+          </ul>
         </li>
         <li class="nav-item has-submenu">
           <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-gears"></i> Spare Parts <i class="fa-solid fa-chevron-down arrow"></i></a>

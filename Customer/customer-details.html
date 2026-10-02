@@ -6,17 +6,9 @@
     <div style="flex: 1; max-width: 300px;">
       <input type="text" id="customerSearchInput" placeholder="Search by Name or Mobile..." onkeyup="filterCustomerDetailsTable()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
     </div>
-    <div>
-      <label for="customerPageSize">Show</label>
-      <select id="customerPageSize" onchange="filterCustomerDetailsTable()" style="padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px;">
-        <option value="10">10</option>
-        <option value="50">50</option>
-        <option value="100">100</option>
-        <option value="all">All</option>
-      </select>
-    </div>
   </div>
   
+  <div id="customer-pagination" style="margin:0 0 12px;"></div>
   <div class="table-responsive">
     <table id="customer-table">
       <thead id="customer-table-head">
@@ -27,5 +19,4 @@
       </tbody>
     </table>
   </div>
-  <div id="customer-pagination" style="display:flex; justify-content:flex-end; align-items:center; gap:10px; margin-top:12px;"></div>
 </section>

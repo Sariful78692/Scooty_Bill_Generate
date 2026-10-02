@@ -55,8 +55,9 @@ filteredAll = filteredAll.reverse();
 
   // ✅ নতুন: Name/Mobile সার্চ ফিল্টার
   if (searchQuery) {
+    const customersById = new Map(customerDataList.map(customer => [String(customer["ID"] || "").trim(), customer]));
     filteredAll = filteredAll.filter(b => {
-      const cust = customerDataList.find(c => String(c["ID"]).trim() === String(b["Customer ID"]).trim());
+      const cust = customersById.get(String(b["Customer ID"] || "").trim());
       const nameMatch = String(b["Customer Name"] || "").toLowerCase().includes(searchQuery);
       const mobileMatch = String(cust?.["Mobile No"] || "").toLowerCase().includes(searchQuery);
       return nameMatch || mobileMatch;
@@ -74,7 +75,9 @@ filteredAll = filteredAll.reverse();
   reportCurrentPage = Math.min(reportCurrentPage, pageCount);
   const filteredBills = filteredAll.slice((reportCurrentPage - 1) * pageSize, reportCurrentPage * pageSize);
   const pagination = document.getElementById("report-pagination");
-  if (pagination) pagination.innerHTML = `<span>Page ${reportCurrentPage} of ${pageCount}</span><button type="button" class="btn-primary" onclick="changeReportPage(-1)" ${reportCurrentPage <= 1 ? "disabled" : ""}>Previous</button><button type="button" class="btn-primary" onclick="changeReportPage(1)" ${reportCurrentPage >= pageCount ? "disabled" : ""}>Next</button>`;
+  const rangeStart = filteredBills.length ? (reportCurrentPage - 1) * pageSize + 1 : 0;
+  const rangeEnd = filteredBills.length ? rangeStart + filteredBills.length - 1 : 0;
+  if (pagination) pagination.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border:1px solid #dbe3ee;border-radius:10px;background:#f8fafc;color:#526783;"><label style="display:flex;align-items:center;gap:10px;">Bills per page <select id="reportPageSize" onchange="changeReportPageSize(this.value)" style="padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;background:white;"><option value="10" ${limit === "10" ? "selected" : ""}>10</option><option value="25" ${limit === "25" ? "selected" : ""}>25</option><option value="50" ${limit === "50" ? "selected" : ""}>50</option><option value="100" ${limit === "100" ? "selected" : ""}>100</option><option value="all" ${limit === "all" ? "selected" : ""}>All</option></select></label><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span>Showing ${rangeStart}–${rangeEnd} of ${filteredAll.length}</span><button type="button" class="btn-secondary" onclick="changeReportPage(-1)" ${reportCurrentPage <= 1 ? "disabled" : ""}>Previous</button><button type="button" class="btn-secondary" onclick="changeReportPage(1)" ${reportCurrentPage >= pageCount ? "disabled" : ""}>Next</button></div></div>`;
   
   const tbody = document.getElementById("report-table-body"); 
   if (!tbody) return; 
@@ -96,6 +99,7 @@ filteredAll = filteredAll.reverse();
       <td>${safeDisplay(bill["Customer Name"])}</td>
       <td><span class="badge">${safeDisplay(bill["Item"])}</span><br><small>${safeDisplay(bill["Vehicle Company"])}</small></td>
       <td>${safeDisplay(bill["Vehicle Model"])}</td>
+      <td>${safeDisplay(bill["Vehicle Colour"])}</td>
       <td>₹${amt.toFixed(2)}</td>
       <td>${actions}</td>`;
     tbody.appendChild(tr);
@@ -104,5 +108,10 @@ filteredAll = filteredAll.reverse();
 
 window.changeReportPage = function(delta) {
   reportCurrentPage += delta;
+  generateReport(false);
+};
+
+window.changeReportPageSize = function() {
+  reportCurrentPage = 1;
   generateReport(false);
 };

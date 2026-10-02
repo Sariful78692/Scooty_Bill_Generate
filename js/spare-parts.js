@@ -50,6 +50,142 @@ window.renderPartsSection = function(type) {
   renderPartsTable(type);
 };
 
+window.calculateVehicleTotalCost = function() {
+  const cost = parseFloat(document.getElementById("costPrice")?.value) || 0;
+  const cgst = parseFloat(document.getElementById("cgst")?.value) || 0;
+  const sgst = parseFloat(document.getElementById("sgst")?.value) || 0;
+  const igst = parseFloat(document.getElementById("igst")?.value) || 0;
+  const total = document.getElementById("totalCostPrice");
+  if (total) total.value = (cost * (1 + (cgst + sgst + igst) / 100)).toFixed(2);
+};
+
+window.renderVehicleStock = function() {
+  const app = document.getElementById("app-content");
+  const editing = window.editingVehicleStock || null;
+  const fields = [
+    ["date", "Date", "date", true],
+    ["billNo", "Bill No", "text", true],
+    ["vehicleName", "Vehicle Name", "text", true],
+    ["vehicleCompany", "Vehicle Company", "text", true],
+    ["vehicleModel", "Vehicle Model", "text", true],
+    ["vehicleColour", "Vehicle Colour", "text", true],
+    ["chassisNo", "Chassis No", "text", true],
+    ["engineNo", "Engine No", "text", true],
+    ["costPrice", "Cost Price", "number", true],
+    ["cgst", "CGST (%)", "number", false, "CGST"],
+    ["sgst", "SGST (%)", "number", false, "SGST"],
+    ["igst", "IGST (%)", "number", false, "IGST"],
+    ["totalCostPrice", "Total Cost Price", "number", true]
+  ];
+  const availableStock = getAvailableVehicleStockList();
+  const rows = availableStock.slice().reverse().map(item => `<tr>${fields.map(field => `<td>${escapeHtml(item[field[4] || field[1]] ?? "")}</td>`).join("")}<td><div class="action-btns"><button class="btn-edit" type="button" title="Edit" onclick="editVehicleStock('${escapeHtml(item.ID)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-delete" type="button" title="Delete" onclick="deleteVehicleStock('${escapeHtml(item.ID)}')"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join("");
+  app.innerHTML = `<section class="content-section"><h1><i class="fa-solid fa-warehouse"></i> Stock Management</h1><div class="form-card"><h3>${editing ? "Edit Vehicle Stock" : "Vehicle Stock Entry"}</h3><form id="vehicle-stock-form"><input type="hidden" id="vehicle-stock-id" value="${editing ? escapeHtml(editing.ID) : ""}"><div class="form-grid">${fields.map(([id, label, type, required]) => { const numeric = type === "number"; const readonly = id === "totalCostPrice"; const duplicateCheck = id === "chassisNo" || id === "engineNo"; const textInput = type === "text"; const inputHandler = textInput ? `this.value=this.value.toUpperCase();${duplicateCheck ? "validateVehicleStockDuplicates();" : ""}` : (duplicateCheck ? "validateVehicleStockDuplicates();" : ""); return `<div class="form-group"><label for="${id}">${label}</label><input id="${id}" name="${id}" type="${type}" ${numeric ? 'min="0" step="any"' : (textInput ? `maxlength="100" oninput="${inputHandler}"` : "")} ${required ? "required" : ""} ${readonly ? 'readonly style="background:#e2e8f0"' : ""} ${id === "costPrice" || id === "cgst" || id === "sgst" || id === "igst" ? 'oninput="calculateVehicleTotalCost()"' : ""} value="${editing ? escapeHtml(editing[fields.find(field => field[0] === id)?.[4] || label] ?? "") : ""}"></div>`; }).join("")}</div><div id="vehicle-stock-duplicate-warning" style="display:none;color:#dc2626;font-weight:700;margin-top:12px;">Already exist: this Chassis No or Engine No is already in stock.</div><div class="form-actions"><button class="btn-primary" id="vehicle-stock-submit" type="submit"><i class="fa-solid fa-${editing ? "floppy-disk" : "plus"}"></i> ${editing ? "Update" : "Submit"}</button>${editing ? `<button class="btn-secondary" type="button" id="vehicle-stock-cancel">Cancel</button>` : ""}</div></form></div><div class="table-responsive"><h3>Vehicle Stock List</h3><table><thead><tr>${fields.map(([, label]) => `<th>${label}</th>`).join("")}<th>Actions</th></tr></thead><tbody>${rows || `<tr><td colspan="${fields.length + 1}" class="text-center">No vehicle stock entries yet.</td></tr>`}</tbody></table></div></section>`;
+  calculateVehicleTotalCost();
+  if (!document.getElementById("date").value) {
+    const today = new Date();
+    document.getElementById("date").value = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  }
+  validateVehicleStockDuplicates();
+  document.getElementById("vehicle-stock-cancel")?.addEventListener("click", () => { window.editingVehicleStock = null; renderVehicleStock(); });
+  document.getElementById("vehicle-stock-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = document.getElementById("vehicle-stock-submit");
+    const payload = Object.fromEntries(fields.map(([id]) => [id, document.getElementById(id).value.trim()]));
+    const id = document.getElementById("vehicle-stock-id").value;
+    if (validateVehicleStockDuplicates()) return;
+    const originalButtonHtml = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${id ? "Updating..." : "Submitting..."}`;
+    try {
+      const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:id ? "update_vehicle_stock" : "save_vehicle_stock", id, ...payload})});
+      const result = await response.json();
+      if (!response.ok || result.status !== "success") throw new Error(result.message || "Could not save vehicle stock.");
+      window.editingVehicleStock = null;
+      showToast(id ? "Vehicle stock updated successfully!" : "Vehicle stock submitted successfully!");
+      await loadVehicleStockData();
+      renderVehicleStock();
+    } catch (error) {
+      showToast(error.message || "Could not connect to the server.", "error");
+      button.disabled = false;
+      button.innerHTML = originalButtonHtml;
+    }
+  });
+};
+
+window.validateVehicleStockDuplicates = function() {
+  const normalize = value => String(value || "").trim().toLowerCase();
+  const chassis = normalize(document.getElementById("chassisNo")?.value);
+  const engine = normalize(document.getElementById("engineNo")?.value);
+  const id = String(document.getElementById("vehicle-stock-id")?.value || "");
+  const duplicate = (vehicleStockList || []).some(stock => String(stock.ID || "") !== id && ((chassis && normalize(stock["Chassis No"]) === chassis) || (engine && normalize(stock["Engine No"]) === engine)));
+  const warning = document.getElementById("vehicle-stock-duplicate-warning");
+  const button = document.getElementById("vehicle-stock-submit");
+  if (warning) warning.style.display = duplicate ? "block" : "none";
+  if (button) button.disabled = duplicate;
+  return duplicate;
+};
+
+window.renderVehicleStockReport = function() {
+  const app = document.getElementById("app-content");
+  if (!app) return;
+  const groups = new Map();
+  const normalize = value => String(value || "").trim();
+  const keyFor = (company, model, colour) => [company, model, colour].map(value => value.toLowerCase()).join("\u001f");
+  const getGroup = (company, model, colour) => {
+    company = normalize(company) || "Unknown Company";
+    model = normalize(model) || "Unknown Model";
+    colour = normalize(colour) || "Unspecified";
+    const key = keyFor(company, model, colour);
+    if (!groups.has(key)) groups.set(key, { company, model, colour, purchased: 0, sales: 0, present: 0, chassis: [], engines: [], units: [] });
+    return groups.get(key);
+  };
+
+  // Stock rows still present are the unsold purchases. Sold bill quantities
+  // are added back to reconstruct purchase totals after stock rows are consumed.
+  (getAvailableVehicleStockList() || []).forEach(stock => {
+    const group = getGroup(stock["Vehicle Company"], stock["Vehicle Model"], stock["Vehicle Colour"]);
+    group.purchased += 1;
+    group.present += 1;
+    const chassis = normalize(stock["Chassis No"]);
+    if (chassis) group.chassis.push(chassis);
+    const engine = normalize(stock["Engine No"]);
+    if (engine) group.engines.push(engine);
+    group.units.push({ chassis: chassis || "—", engine: engine || "—" });
+  });
+  (billDataList || []).forEach(bill => {
+    if (!normalize(bill.Item).toLowerCase().includes("scooty")) return;
+    const quantity = Math.max(0, parseFloat(bill.Quantity) || 1);
+    const group = getGroup(bill["Vehicle Company"], bill["Vehicle Model"], bill["Vehicle Colour"]);
+    group.sales += quantity;
+    group.purchased += quantity;
+  });
+
+  const rows = Array.from(groups.values()).sort((a, b) => a.company.localeCompare(b.company) || a.model.localeCompare(b.model) || a.colour.localeCompare(b.colour));
+  const total = key => rows.reduce((sum, row) => sum + row[key], 0);
+  app.innerHTML = `<section class="content-section"><h1><i class="fa-solid fa-chart-column"></i> Stock Report</h1><div class="dashboard-cards" style="margin:18px 0 24px"><div class="stat-card"><div class="stat-info"><span class="stat-title">Scooty Purchased</span><h2 class="stat-value">${total("purchased")}</h2></div></div><div class="stat-card"><div class="stat-info"><span class="stat-title">Scooty Sales</span><h2 class="stat-value">${total("sales")}</h2></div></div><div class="stat-card"><div class="stat-info"><span class="stat-title">Present Stock</span><h2 class="stat-value">${total("present")}</h2></div></div></div><h3 style="margin:0 0 14px">Company, Model &amp; Colour-wise Scooty Stock</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">${rows.length ? rows.map(row => `<article style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(15,23,42,.06);border-top:4px solid #2563eb"><div style="font-size:12px;color:#64748b">${escapeHtml(row.company)}</div><h3 style="margin:4px 0 12px;color:#0f172a">${escapeHtml(row.model)} <span style="font-weight:500;color:#475569">· ${escapeHtml(row.colour)}</span></h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center"><div style="padding:9px;background:#f8fafc;border-radius:8px"><small>Purchased</small><strong style="display:block;font-size:20px">${row.purchased}</strong></div><div style="padding:9px;background:#fff7ed;border-radius:8px"><small>Sales</small><strong style="display:block;font-size:20px">${row.sales}</strong></div><div style="padding:9px;background:#eff6ff;border-radius:8px"><small>Present</small><strong style="display:block;font-size:20px">${row.present}</strong></div></div><div style="margin-top:14px;font-size:13px;line-height:1.7"><strong>Available Scooty Details (${row.units.length})</strong>${row.units.length ? row.units.map((unit, index) => `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0"><strong>${index + 1}.</strong> Chassis No: ${escapeHtml(unit.chassis)}<br><span style="padding-left:18px">Engine No: ${escapeHtml(unit.engine)}</span></div>`).join("") : `<div>Currently no stock available.</div>`}</div></article>`).join("") : `<p class="text-center">No scooty stock or sales data found.</p>`}</div></section>`;
+};
+
+window.editVehicleStock = function(id) {
+  window.editingVehicleStock = (vehicleStockList || []).find(item => String(item.ID) === String(id)) || null;
+  if (window.editingVehicleStock) renderVehicleStock();
+};
+
+window.deleteVehicleStock = async function(id) {
+  if (!confirm("Delete this vehicle stock entry?")) return;
+  try {
+    const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"delete_vehicle_stock", id})});
+    const result = await response.json();
+    if (!response.ok || result.status !== "success") throw new Error(result.message || "Could not delete vehicle stock.");
+    if (String(window.editingVehicleStock?.ID) === String(id)) window.editingVehicleStock = null;
+    showToast("Vehicle stock deleted successfully!");
+    await loadVehicleStockData();
+    renderVehicleStock();
+  } catch (error) {
+    showToast(error.message || "Could not connect to the server.", "error");
+  }
+};
+
 window.onPartNameChange = function() {
   const name = document.getElementById("partName").value;
   const stock = getPartStock(name);

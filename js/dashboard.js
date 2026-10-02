@@ -1,5 +1,6 @@
 window.updateDashboardCounts = function() {
-  let scooty = 0, bike = 0, cycle = 0;
+  let scooty = 0, bike = 0, cycle = 0, totalScootySales = 0;
+  const customersById = new Map(customerDataList.map(customer => [String(customer["ID"] || "").trim(), customer]));
   customerDataList.forEach(c => {
     let v = String(c["Vehicle"] || "").trim().toLowerCase();
     if (v === "scooty") scooty++; 
@@ -7,8 +8,15 @@ window.updateDashboardCounts = function() {
     else if (v === "cycle") cycle++;
   });
   
-  if (document.getElementById("count-total")) document.getElementById("count-total").innerText = customerDataList.length;
-  if (document.getElementById("count-scooty")) document.getElementById("count-scooty").innerText = scooty;
+  billDataList.forEach(bill => {
+    const customer = customersById.get(String(bill["Customer ID"] || "").trim());
+    const item = String(bill["Item"] || customer?.["Vehicle"] || "").trim().toLowerCase();
+    if (item === "scooty") totalScootySales++;
+  });
+  const scootyStock = getAvailableVehicleStockList().length;
+
+  if (document.getElementById("count-scooty-sales")) document.getElementById("count-scooty-sales").innerText = totalScootySales;
+  if (document.getElementById("count-scooty-stock")) document.getElementById("count-scooty-stock").innerText = scootyStock;
   if (document.getElementById("count-bike")) document.getElementById("count-bike").innerText = bike;
   if (document.getElementById("count-cycle")) document.getElementById("count-cycle").innerText = cycle;
 
@@ -39,7 +47,7 @@ window.updateDashboardCounts = function() {
     }
     if (isToday) {
       todaySales += amt;
-      const cust = customerDataList.find(c => String(c["ID"] || "").trim() === String(b["Customer ID"] || "").trim());
+      const cust = customersById.get(String(b["Customer ID"] || "").trim());
       const vehicle = String(b["Item"] || cust?.["Vehicle"] || "").trim().toLowerCase();
       if (vehicle === "scooty") todayScootySales++;
     }

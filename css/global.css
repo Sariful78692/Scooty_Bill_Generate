@@ -12,7 +12,7 @@ body { background-color: #f4f6f9; color: #333; overflow-x: hidden; }
 .page-loader-ride { color: #0284c7; font-size: 38px; line-height: 1; animation: scootyRide .8s ease-in-out infinite alternate; }
 .page-loader-road { height: 3px; margin: 14px 0 12px; overflow: hidden; background: #e2e8f0; }
 .page-loader-road::after { display: block; width: 35%; height: 100%; background: #f59e0b; content: ""; animation: roadPass .8s linear infinite; }
-.page-loader-card p { color: #334155; font-size: 14px; font-weight: 600; }
+.page-loader-card p { margin: 0; color: #334155; font-size: 14px; font-weight: 600; }
 @keyframes scootyRide { from { transform: translateX(-12px) rotate(-2deg); } to { transform: translateX(12px) rotate(2deg); } }
 @keyframes roadPass { from { transform: translateX(-110%); } to { transform: translateX(290%); } }
 
