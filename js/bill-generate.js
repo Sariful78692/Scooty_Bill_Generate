@@ -53,15 +53,43 @@ window.confirmPrintSelectedBill = function() {
 let billCustomerCurrentPage = 1;
 let billCustomerPageSize = "10";
 let billCustomerRows = [];
+let billCustomerBranchFilter = "all";
+
+function setupBillCustomerBranchFilter() {
+  const group = document.getElementById("bill-branch-filter-group");
+  const select = document.getElementById("billBranchFilter");
+  if (!group || !select) return;
+  if (String(currentBranch || "").trim().toLowerCase() !== "main branch") {
+    group.style.display = "none";
+    billCustomerBranchFilter = currentBranch;
+    return;
+  }
+  group.style.display = "block";
+  const branchList = availableBranches || [];
+  if (select.dataset.branchList !== branchList.join("|")) {
+    select.innerHTML = [`<option value="all">All Branches</option>`, ...branchList.map(branch => `<option value="${escapeHtml(branch)}">${escapeHtml(branch)}</option>`)].join("");
+    select.dataset.branchList = branchList.join("|");
+  }
+  if (!["all", ...branchList].some(branch => String(branch).toLowerCase() === String(billCustomerBranchFilter).toLowerCase())) billCustomerBranchFilter = "all";
+  select.value = billCustomerBranchFilter;
+}
+
+window.changeBillCustomerBranch = function(branch) {
+  billCustomerBranchFilter = branch;
+  filterBillCustomers();
+};
 
 window.getBillCustomerRows = function(list = customerDataList) {
-  const rows = [...(list || [])];
+  const isMain = String(currentBranch || "").trim().toLowerCase() === "main branch";
+  const selectedBranch = isMain ? billCustomerBranchFilter : currentBranch;
+  const branchMatches = row => selectedBranch === "all" || String(row.Branch || "Main Branch").trim().toLowerCase() === String(selectedBranch).trim().toLowerCase();
+  const rows = [...(list || [])].filter(branchMatches);
   const knownIds = new Set((customerDataList || []).map(customer => String(customer["ID"] || "").trim()).filter(Boolean));
   const includedIds = new Set(rows.map(customer => String(customer["ID"] || "").trim()).filter(Boolean));
   const missingCustomers = new Map();
   (billDataList || []).forEach(bill => {
     const id = String(bill["Customer ID"] || "").trim();
-    if (!id || knownIds.has(id)) return;
+    if (!id || knownIds.has(id) || !branchMatches(bill)) return;
     const previous = missingCustomers.get(id);
     missingCustomers.set(id, {
       "ID": id,
@@ -70,6 +98,7 @@ window.getBillCustomerRows = function(list = customerDataList) {
       "Vehicle": bill.Item || "",
       "Vehicle Company": bill["Vehicle Company"] || "",
       "Vehicle Model": bill["Vehicle Model"] || "",
+      "Branch": bill.Branch || "Main Branch",
       "Archived": "TRUE",
       _missingCustomerRecord: true,
       _billDate: bill.Date || previous?._billDate || ""
@@ -82,10 +111,12 @@ window.getBillCustomerRows = function(list = customerDataList) {
 window.renderBillCustomerTable = function(list, resetPage = true) {
   const tbody = document.getElementById("bill-customer-tbody");
   if (!tbody) return;
+  setupBillCustomerBranchFilter();
   billCustomerRows = [...(list || [])];
   if (resetPage) billCustomerCurrentPage = 1;
   const tableHead = document.querySelector("#bill-customer-table thead");
-  if (tableHead) tableHead.innerHTML = `<tr><th>Name</th><th>Mobile</th><th>Vehicle</th><th>Company</th><th>Model</th><th>Action</th></tr>`;
+  const showBranchColumn = String(currentBranch || "").trim().toLowerCase() === "main branch";
+  if (tableHead) tableHead.innerHTML = `<tr><th>Name</th><th>Mobile</th><th>Vehicle</th><th>Company</th><th>Model</th>${showBranchColumn ? "<th>Branch</th>" : ""}<th>Action</th></tr>`;
   tbody.innerHTML = "";
   const pageSize = billCustomerPageSize === "all" ? Math.max(billCustomerRows.length, 1) : Math.max(1, Number(billCustomerPageSize) || 10);
   const pageCount = Math.max(1, Math.ceil(billCustomerRows.length / pageSize));
@@ -96,7 +127,7 @@ window.renderBillCustomerTable = function(list, resetPage = true) {
   const rangeEnd = pageRows.length ? startIndex + pageRows.length : 0;
   const pagination = document.getElementById("bill-customer-pagination");
   if (pagination) pagination.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border:1px solid #dbe3ee;border-radius:10px;background:#f8fafc;color:#526783;"><label style="display:flex;align-items:center;gap:10px;">Customers per page <select onchange="changeBillCustomerPageSize(this.value)" style="padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;background:white;"><option value="10" ${billCustomerPageSize === "10" ? "selected" : ""}>10</option><option value="25" ${billCustomerPageSize === "25" ? "selected" : ""}>25</option><option value="50" ${billCustomerPageSize === "50" ? "selected" : ""}>50</option><option value="100" ${billCustomerPageSize === "100" ? "selected" : ""}>100</option><option value="all" ${billCustomerPageSize === "all" ? "selected" : ""}>All</option></select></label><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span>Showing ${rangeStart}–${rangeEnd} of ${billCustomerRows.length}</span><button type="button" class="btn-secondary" onclick="changeBillCustomerPage(-1)" ${billCustomerCurrentPage <= 1 ? "disabled" : ""}>Previous</button><button type="button" class="btn-secondary" onclick="changeBillCustomerPage(1)" ${billCustomerCurrentPage >= pageCount ? "disabled" : ""}>Next</button></div></div>`;
-  if(pageRows.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="text-center">No customers.</td></tr>`; return; }
+  if(pageRows.length === 0) { tbody.innerHTML = `<tr><td colspan="${showBranchColumn ? 7 : 6}" class="text-center">No customers.</td></tr>`; return; }
   
   pageRows.forEach(cust => {
     const tr = document.createElement("tr");
@@ -131,6 +162,7 @@ window.renderBillCustomerTable = function(list, resetPage = true) {
       <td><span class="badge">${cust["Vehicle"] || ""}</span></td>
       <td>${company}</td>
       <td>${model}</td>
+      ${showBranchColumn ? `<td>${escapeHtml(cust.Branch || "Main Branch")}</td>` : ""}
       <td style="display:flex; gap:5px;">${actionBtns}</td>
     `;
     tbody.appendChild(tr);

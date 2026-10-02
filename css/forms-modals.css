@@ -36,4 +36,19 @@
 
 @media (max-width: 760px) {
   .form-card { padding: 14px !important; }
+  .form-grid { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .form-group input, .form-group select, .form-group textarea { width: 100%; min-width: 0; }
+  .form-group input, .form-group select, .form-group textarea { font-size: 16px; }
+  .select-with-btn { min-width: 0; }
+  .select-with-btn select { min-width: 0; }
+  .select-with-btn .btn-small { flex: 0 0 34px; }
+  .modal-overlay { padding: 12px; }
+  .modal-content { width: 100%; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; }
+  .modal-header, .modal-body, .modal-footer { padding-left: 14px; padding-right: 14px; }
+  .settings-card { width: 100%; max-width: none; padding: 18px; }
+}
+
+@media (max-width: 420px) {
+  .btn-primary, .btn-secondary, .btn-danger, .btn-print { padding: 10px 13px; font-size: 14px; }
+  .form-card h3 { font-size: 16px; }
 }

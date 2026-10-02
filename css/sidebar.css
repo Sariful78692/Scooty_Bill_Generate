@@ -14,17 +14,32 @@
 .submenu li a:hover { color: #fff; transform: translateX(5px); }
 .bottom-actions { margin-top: auto; display: flex; align-items: center; gap: 8px; padding: 12px 15px; }
 .logout-side { border: 0; border-radius: 6px; padding: 10px 12px; background: #ef4444; color: #fff; cursor: pointer; font-size: 14px; }
+.mobile-nav-toggle { display: none; }
 /* .logout-side { border: 0; border-radius: 6px; padding: 10px 12px; background: #ef4444; color: #fff; cursor: pointer; font-size: 14px; } */
 
 /* Responsive Sidebar */
 @media (max-width: 760px) {
   .sidebar { width: 100%; min-height: auto; padding: 10px 0; position: relative; }
-  .nav-menu { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 4px 8px; }
+  .brand { flex-direction: row !important; justify-content: center; padding: 0 12px 10px; }
+  .brand > div:first-child { width: 54px !important; height: 54px !important; }
+  .brand h2 { font-size: 17px; }
+  .mobile-nav-toggle { display: flex; align-items: center; justify-content: center; gap: 9px; width: calc(100% - 24px); min-height: 42px; margin: 8px 12px; border: 1px solid #475569; border-radius: 8px; background: #334155; color: #fff; font-weight: 700; }
+  .nav-menu { display: none; max-height: 55vh; overflow-y: auto; overscroll-behavior: contain; flex-wrap: wrap; justify-content: center; gap: 4px; padding: 4px 8px; }
+  .sidebar.mobile-nav-open .nav-menu { display: flex; }
   .nav-item { flex: 1 1 44%; }
   .nav-link { justify-content: center; padding: 11px 7px; font-size: 13px; border-radius: 8px; }
+  .nav-link { min-height: 44px; }
   .nav-link:hover { transform: none; }
   .submenu { position: static; width: 100%; }
-  .bottom-actions { justify-content: center; padding: 8px; }
+  .bottom-actions { display: none !important; justify-content: center; padding: 8px; }
+  .sidebar.mobile-nav-open .bottom-actions { display: flex !important; }
+  .bottom-actions > * { flex: 1 1 130px; text-align: center; }
+}
+
+@media (max-width: 420px) {
+  .nav-item { flex-basis: 100%; }
+  .nav-link { justify-content: flex-start; padding-left: 18px; }
+  .submenu li a { min-height: 42px; padding-left: 48px; }
 }
 
 /* Settings & Logout Button Animations */

@@ -1,12 +1,43 @@
 let customerCurrentPage = 1;
 let customerFilteredRows = [];
+let customerBranchFilter = "all";
+
+function isMainBranchView() { return String(currentBranch || "").trim().toLowerCase() === "main branch"; }
+
+function setupCustomerBranchFilter() {
+  const group = document.getElementById("customer-branch-filter-group");
+  const select = document.getElementById("customerBranchFilter");
+  if (!group || !select) return;
+  if (!isMainBranchView()) { group.style.display = "none"; customerBranchFilter = currentBranch; return; }
+  group.style.display = "block";
+  const options = [`<option value="all">All Branches</option>`, ...(availableBranches || []).map(branch => `<option value="${escapeHtml(branch)}">${escapeHtml(branch)}</option>`)].join("");
+  if (select.dataset.branchList !== (availableBranches || []).join("|")) {
+    select.innerHTML = options;
+    select.dataset.branchList = (availableBranches || []).join("|");
+  }
+  if (!["all", ...(availableBranches || [])].some(branch => String(branch).toLowerCase() === String(customerBranchFilter).toLowerCase())) customerBranchFilter = "all";
+  select.value = customerBranchFilter;
+}
+
+function getVisibleCustomerRows() {
+  let rows = customerDataList.filter(customer => !["true", "yes", "1", "deleted"].includes(String(customer.Archived || "").trim().toLowerCase()));
+  if (currentFilter !== "all") rows = rows.filter(customer => (customer["Vehicle"] || "").trim() === currentFilter);
+  const branch = isMainBranchView() ? customerBranchFilter : currentBranch;
+  if (branch !== "all") rows = rows.filter(customer => String(customer.Branch || "Main Branch").trim().toLowerCase() === String(branch).trim().toLowerCase());
+  return rows;
+}
+
+window.changeCustomerBranchFilter = function(branch) {
+  customerBranchFilter = branch;
+  customerCurrentPage = 1;
+  filterCustomerDetailsTable();
+};
 
 window.filterCustomerView = function() {
   const title = document.getElementById("details-view-title");
   if(!title) return;
-  
-  let filtered = customerDataList.filter(c => !["true", "yes", "1", "deleted"].includes(String(c.Archived || "").trim().toLowerCase()));
-  if (currentFilter !== "all") filtered = filtered.filter(c => (c["Vehicle"] || "").trim() === currentFilter);
+  setupCustomerBranchFilter();
+  const filtered = getVisibleCustomerRows();
       
   title.innerText = currentFilter !== "all" ? `Customer Details - ${currentFilter}` : "Customer Details (All)";
   
@@ -16,11 +47,9 @@ window.filterCustomerView = function() {
 };
 
 window.filterCustomerDetailsTable = function() {
-  const query = document.getElementById("customerSearchInput").value.toLowerCase().trim();
-  
-  // বর্তমান ফিল্টার (Scooty, Bike, Cycle বা All) অনুযায়ী ডেটা নেওয়া হচ্ছে
-  let filtered = customerDataList.filter(c => !["true", "yes", "1", "deleted"].includes(String(c.Archived || "").trim().toLowerCase()));
-  if (currentFilter !== "all") filtered = filtered.filter(c => (c["Vehicle"] || "").trim() === currentFilter);
+  setupCustomerBranchFilter();
+  const query = document.getElementById("customerSearchInput")?.value.toLowerCase().trim() || "";
+  let filtered = getVisibleCustomerRows();
 
   // নাম অথবা মোবাইল নাম্বার দিয়ে ফিল্টার করা হচ্ছে
   if (query !== "") {
@@ -52,11 +81,11 @@ window.renderCustomerTable = function(list) {
   const rangeEnd = list.length ? startIndex + list.length : 0;
   if (pagination) pagination.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border:1px solid #dbe3ee;border-radius:10px;background:#f8fafc;color:#526783;"><label style="display:flex;align-items:center;gap:10px;">Customers per page <select id="customerPageSize" onchange="changeCustomerPageSize(this.value)" style="padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;background:white;"><option value="10" ${limit === "10" ? "selected" : ""}>10</option><option value="25" ${limit === "25" ? "selected" : ""}>25</option><option value="50" ${limit === "50" ? "selected" : ""}>50</option><option value="100" ${limit === "100" ? "selected" : ""}>100</option><option value="all" ${limit === "all" ? "selected" : ""}>All</option></select></label><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span>Showing ${rangeStart}–${rangeEnd} of ${customerFilteredRows.length}</span><button type="button" class="btn-secondary" onclick="changeCustomerPage(-1)" ${customerCurrentPage <= 1 ? "disabled" : ""}>Previous</button><button type="button" class="btn-secondary" onclick="changeCustomerPage(1)" ${customerCurrentPage >= pageCount ? "disabled" : ""}>Next</button></div></div>`;
   
-  thead.innerHTML = `<tr><th>Photo</th><th>Name</th><th>Mobile</th><th>Vehicle</th><th>Company</th><th>Model</th><th>Actions</th></tr>`;
+  thead.innerHTML = `<tr><th>Photo</th><th>Name</th><th>Mobile</th><th>Vehicle</th><th>Company</th><th>Model</th>${isMainBranchView() ? "<th>Branch</th>" : ""}<th>Actions</th></tr>`;
   tbody.innerHTML = "";
   
   if(list.length === 0) { 
-    tbody.innerHTML = `<tr><td colspan="7" class="text-center">No customers found.</td></tr>`; 
+    tbody.innerHTML = `<tr><td colspan="${isMainBranchView() ? 8 : 7}" class="text-center">No customers found.</td></tr>`;
     return; 
   }
 
@@ -100,6 +129,7 @@ window.renderCustomerTable = function(list) {
       <td><span class="badge">${cust["Vehicle"] || ""}</span></td>
       <td>${compText}</td>
       <td>${modelText}</td>
+      ${isMainBranchView() ? `<td>${escapeHtml(cust.Branch || "Main Branch")}</td>` : ""}
       <td>
         <div class="action-btns">
           <button class="btn-edit" onclick="editCustomer('${cust["ID"]}')"><i class="fa-solid fa-pen"></i></button>
@@ -116,7 +146,7 @@ window.changeCustomerPage = function(delta) {
 };
 
 window.changeCustomerPageSize = function(value) {
-  let filtered = currentFilter !== "all" ? customerDataList.filter(c => (c["Vehicle"] || "").trim() === currentFilter) : customerDataList;
+  let filtered = getVisibleCustomerRows();
   const query = document.getElementById("customerSearchInput")?.value.toLowerCase().trim() || "";
   if (query) filtered = filtered.filter(c => String(c["Customer Name"] || "").toLowerCase().includes(query) || String(c["Mobile No"] || "").toLowerCase().includes(query));
   const reversed = [...filtered].reverse();

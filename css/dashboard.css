@@ -50,6 +50,13 @@
   .chart-card { height: 320px !important; min-height: 320px !important; padding: 12px !important; } 
 }
 @media (max-width: 760px) {
+  #report-section > .form-card { flex-wrap: wrap !important; align-items: stretch !important; }
+  #report-section > .form-card > .form-group,
+  #report-section > .form-card > select,
+  #report-section > .form-card > button { width: 100%; max-width: none !important; flex: 1 1 100%; }
+  .charts-container { grid-template-columns: minmax(0, 1fr) !important; }
+}
+@media (max-width: 760px) {
   .dashboard-cards { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
   .stat-card { padding: 14px 12px; min-width: 0; }
   .stat-title { font-size: 12px; }
@@ -79,4 +86,9 @@
 .card:hover i, .stat-card:hover i, .card:hover .icon-wrapper i {
     transform: scale(1.3) rotate(15deg) !important;
     color: #0ea5e9; /* হোভার করলে আইকনের কালার হালকা গ্লো করবে */
+}
+@media (max-width: 480px) {
+  .dashboard-cards { grid-template-columns: minmax(0, 1fr); }
+  .stat-card { padding: 15px; }
+  .stock-report-summary { padding: 17px; }
 }

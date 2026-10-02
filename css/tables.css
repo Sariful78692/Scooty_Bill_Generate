@@ -15,4 +15,13 @@ th { background-color: #f8fafc; color: #475569; }
 
 @media (max-width: 760px) {
   table { min-width: 620px; }
+  .table-responsive { padding: 12px; -webkit-overflow-scrolling: touch; }
+  .table-responsive table { width: max-content; min-width: 620px; }
+  .table-responsive th, .table-responsive td { padding: 9px 10px; font-size: 13px; }
+  .action-btns { flex-wrap: wrap; }
+}
+
+@media (max-width: 420px) {
+  .table-responsive { margin-left: -2px; margin-right: -2px; }
+  .cust-photo-img { width: 38px !important; height: 38px !important; }
 }

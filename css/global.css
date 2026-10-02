@@ -30,6 +30,30 @@ body { background-color: #f4f6f9; color: #333; overflow-x: hidden; }
 @media (max-width: 760px) {
   .app-container { display: block; }
   .main-content { padding: 16px 12px; }
+  #app-content, .content-section { width: 100%; min-width: 0; }
+  .content-section h1 { font-size: 21px; line-height: 1.25; overflow-wrap: anywhere; }
+  .form-actions { flex-wrap: wrap; gap: 10px; }
+  .form-actions > button { flex: 1 1 140px; }
+  .btn-primary, .btn-secondary, .btn-danger, .btn-print { min-height: 42px; }
+  .page-loader-card { max-width: calc(100vw - 40px); }
+  .toast-message { top: 12px; right: 12px; left: 12px; text-align: center; }
+}
+
+@media (max-width: 420px) {
+  .main-content { padding: 12px 9px; }
+  .content-section h1 { font-size: 19px; }
+}
+
+@media (max-width: 760px) {
+  #customer-details-section > div:first-child { align-items: stretch !important; flex-direction: column; gap: 10px !important; }
+  #customer-details-section > div:first-child > div { width: 100%; max-width: none !important; }
+  #customer-branch-filter-group, #bill-branch-filter-group { max-width: none !important; }
+  #customerSearchInput, #billSearchInput { font-size: 16px !important; }
+  #customer-pagination > div, #bill-customer-pagination > div, #report-pagination > div { align-items: stretch !important; padding: 11px !important; }
+  #customer-pagination > div > div, #bill-customer-pagination > div > div, #report-pagination > div > div { width: 100%; justify-content: space-between; }
+  #customer-pagination button, #bill-customer-pagination button, #report-pagination button { min-width: 95px; flex: 1 1 95px; }
+  #customer-pagination select, #bill-customer-pagination select, #report-pagination select { min-height: 40px; }
+  .content-section article { min-width: 0; overflow-wrap: anywhere; }
 }
 
 

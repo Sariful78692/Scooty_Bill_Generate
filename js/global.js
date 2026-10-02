@@ -69,6 +69,7 @@ window.apiFetch = function(url, options = {}) {
 };
 
 window.openSettings = function() {
+  closeMobileNav();
   const app = document.getElementById("app-content");
   renderPageWithLoader(() => {
     const isMainBranch = String(currentBranch).trim().toLowerCase() === "main branch";
@@ -230,6 +231,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 // ✅ URL hash পড়ে সঠিক পেজ লোড করা (Ekমাত্র routing entry point — apps-er sob navigation ekhan diyeই jabe)
 function handleRouteFromHash() {
+  closeMobileNav();
   const hash = location.hash.replace("#", "");
 
   // ---- Spare Parts (in-place render, no fetch needed) ----
@@ -279,6 +281,24 @@ function handleRouteFromHash() {
     loadPage('Dashboard/dashboard.html', 'dashboard', 'all', false);
     setActiveNav("dashboard");
   }
+}
+
+window.toggleMobileNav = function() {
+  const sidebar = document.querySelector(".sidebar");
+  const button = document.querySelector(".mobile-nav-toggle");
+  if (!sidebar || !button) return;
+  const open = sidebar.classList.toggle("mobile-nav-open");
+  button.setAttribute("aria-expanded", String(open));
+  button.innerHTML = `<i class="fa-solid fa-${open ? "xmark" : "bars"}"></i><span>${open ? "Close Menu" : "Menu"}</span>`;
+};
+
+function closeMobileNav() {
+  const sidebar = document.querySelector(".sidebar");
+  const button = document.querySelector(".mobile-nav-toggle");
+  if (!sidebar || !button || !sidebar.classList.contains("mobile-nav-open")) return;
+  sidebar.classList.remove("mobile-nav-open");
+  button.setAttribute("aria-expanded", "false");
+  button.innerHTML = `<i class="fa-solid fa-bars"></i><span>Menu</span>`;
 }
 
 function renderWhenDataReady(expectedHash, renderPage) {

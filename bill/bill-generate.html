@@ -4,6 +4,10 @@
   <div class="search-bar-container" style="margin-bottom: 20px;">
     <input type="text" id="billSearchInput" placeholder="Search by Name or Mobile No..." onkeyup="filterBillCustomers()" style="width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 6px;">
   </div>
+  <div id="bill-branch-filter-group" style="display:none;max-width:320px;margin:0 0 14px;">
+    <label for="billBranchFilter">View Branch</label>
+    <select id="billBranchFilter" onchange="changeBillCustomerBranch(this.value)" style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;"></select>
+  </div>
   <div id="bill-customer-pagination" style="margin:0 0 12px;"></div>
   <div class="table-responsive">
     <table id="bill-customer-table">
