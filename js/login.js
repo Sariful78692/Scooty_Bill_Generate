@@ -1,4 +1,4 @@
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyyPaZgFS27TJcOHnK6ejyCsDJZZjM-uCbE_4xueCX5sxL3Wlyu9FQ6TXsB_MuCbOvTDw/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby4XiryrzR8BmYzNSPhVufvDfmORZ7FUTZOWQ-_r-NTZBRwsY9Gntlwjd66ZCqWgR7m/exec";
 
 document.addEventListener("DOMContentLoaded", function () {
   if (localStorage.getItem("daduSessionToken") && localStorage.getItem("daduBranch")) {
