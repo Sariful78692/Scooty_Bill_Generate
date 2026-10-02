@@ -46,7 +46,9 @@ window.forgotPassword = function() { const u = prompt("Enter your username:"); i
 
 window.openSettings = function() {
   const app = document.getElementById("app-content");
-  app.innerHTML = `<section class="content-section settings-page"><h1><i class="fa-solid fa-gear"></i> Settings</h1><div class="settings-card"><h3>User Account</h3><p>Change your login username and password</p><span class="settings-buttons"><button class="btn-primary" onclick="changeAccount()">Change Username / Password</button></span></div></section>`;
+  renderPageWithLoader(() => {
+    app.innerHTML = `<section class="content-section settings-page"><h1><i class="fa-solid fa-gear"></i> Settings</h1><div class="settings-card"><h3>User Account</h3><p>Change your login username and password</p><span class="settings-buttons"><button class="btn-primary" onclick="changeAccount()">Change Username / Password</button></span></div></section>`;
+  });
 };
 
 window.changeAccount = function() {
@@ -104,17 +106,23 @@ function handleRouteFromHash() {
 
   // ---- Spare Parts (in-place render, no fetch needed) ----
   if (hash === "spareParts-purchase") {
-    if (typeof renderPartsSection === "function") renderPartsSection("purchase");
+    renderPageWithLoader(() => {
+      if (typeof renderPartsSection === "function") renderPartsSection("purchase");
+    });
     setActiveNav(hash);
     return;
   }
   if (hash === "spareParts-sale") {
-    if (typeof renderPartsSection === "function") renderPartsSection("sale");
+    renderPageWithLoader(() => {
+      if (typeof renderPartsSection === "function") renderPartsSection("sale");
+    });
     setActiveNav(hash);
     return;
   }
   if (hash === "spareParts-balance") {
-    if (typeof renderPartsBalanceReport === "function") renderPartsBalanceReport();
+    renderPageWithLoader(() => {
+      if (typeof renderPartsBalanceReport === "function") renderPartsBalanceReport();
+    });
     setActiveNav(hash);
     return;
   }
@@ -172,9 +180,46 @@ window.showSection = function(sectionId) {
 // Dynamic Page Loader (with duplicate-call guard)
 const pageTemplateCache = new Map();
 let pageLoadRequestId = 0;
+let pageLoaderRequestId = 0;
+let pageLoaderStartedAt = 0;
+let pageLoaderTimer = null;
+const minimumPageLoaderDuration = 500;
+
+function showPageLoader() {
+  const loader = document.getElementById("page-loader");
+  const requestId = ++pageLoaderRequestId;
+  clearTimeout(pageLoaderTimer);
+  pageLoaderStartedAt = Date.now();
+  if (loader) {
+    loader.classList.remove("hidden");
+    loader.setAttribute("aria-hidden", "false");
+  }
+  return requestId;
+}
+
+function hidePageLoader(requestId) {
+  const loader = document.getElementById("page-loader");
+  const delay = Math.max(0, minimumPageLoaderDuration - (Date.now() - pageLoaderStartedAt));
+  clearTimeout(pageLoaderTimer);
+  pageLoaderTimer = setTimeout(() => {
+    if (requestId !== pageLoaderRequestId || !loader) return;
+    loader.classList.add("hidden");
+    loader.setAttribute("aria-hidden", "true");
+  }, delay);
+}
+
+function renderPageWithLoader(renderPage) {
+  const requestId = showPageLoader();
+  try {
+    renderPage();
+  } finally {
+    hidePageLoader(requestId);
+  }
+}
 
 window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHash = true) {
   const requestId = ++pageLoadRequestId;
+  const loaderRequestId = showPageLoader();
   try {
     let html = pageTemplateCache.get(pageUrl);
     if (!html) {
@@ -210,6 +255,7 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
   } catch (error) {
     console.error("Failed to load page:", error);
   } finally {
+    hidePageLoader(loaderRequestId);
   }
 };
 
