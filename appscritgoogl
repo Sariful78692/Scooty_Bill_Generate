@@ -80,6 +80,35 @@ function doPost(e) {
     var authBranch = getAuthenticatedBranch(data.token);
     if (!authBranch) return jsonResponse({status:"error", message:"Session expired. Please log in again."});
     data.branch = authBranch;
+    if (data.action === "list_branch_messages" || data.action === "send_branch_message") {
+      var chatBranchSheet = getOrCreateSheet(SpreadsheetApp.getActiveSpreadsheet(), "Branches", ["Branch"]);
+      var chatBranchNames = chatBranchSheet.getDataRange().getDisplayValues().slice(1).map(function(row) { return String(row[0] || "").trim(); }).filter(Boolean);
+      if (!chatBranchNames.some(function(name) { return name.toLowerCase() === "main branch"; })) {
+        chatBranchSheet.appendRow(["Main Branch"]);
+        chatBranchNames.push("Main Branch");
+      }
+      var chatTargetBranch = isMainBranch(authBranch) ? String(data.targetBranch || "").trim() : "Main Branch";
+      if (!chatTargetBranch || String(chatTargetBranch).toLowerCase() === String(authBranch).toLowerCase() || !chatBranchNames.some(function(name) { return name.toLowerCase() === chatTargetBranch.toLowerCase(); })) return jsonResponse({status:"error", message:"Choose a valid branch for this conversation."});
+      var chatSheet = getOrCreateSheet(SpreadsheetApp.getActiveSpreadsheet(), "Branch Messages", ["ID", "Timestamp", "From Branch", "To Branch", "Message"]);
+      deleteExpiredBranchMessages(chatSheet, new Date());
+      if (data.action === "send_branch_message") {
+        var chatText = String(data.message || "").trim();
+        if (!chatText || chatText.length > 1000) return jsonResponse({status:"error", message:"Write a message up to 1000 characters."});
+        var chatTimestamp = new Date();
+        var chatId = "MSG-" + chatTimestamp.getTime() + "-" + Math.floor(Math.random() * 10000);
+        chatSheet.appendRow([chatId, chatTimestamp, authBranch, chatTargetBranch, chatText]);
+        return jsonResponse({status:"success", message:{id:chatId, timestamp:chatTimestamp.toISOString(), fromBranch:authBranch, toBranch:chatTargetBranch, message:chatText}});
+      }
+      var chatRows = chatSheet.getDataRange().getDisplayValues();
+      var chatMessages = [];
+      for (var cm = 1; cm < chatRows.length; cm++) {
+        var chatFrom = String(chatRows[cm][2] || "").trim();
+        var chatTo = String(chatRows[cm][3] || "").trim();
+        var sameConversation = (chatFrom.toLowerCase() === String(authBranch).toLowerCase() && chatTo.toLowerCase() === chatTargetBranch.toLowerCase()) || (chatFrom.toLowerCase() === chatTargetBranch.toLowerCase() && chatTo.toLowerCase() === String(authBranch).toLowerCase());
+        if (sameConversation) chatMessages.push({id:chatRows[cm][0], timestamp:chatRows[cm][1], fromBranch:chatFrom, toBranch:chatTo, message:chatRows[cm][4]});
+      }
+      return jsonResponse({status:"success", messages:chatMessages});
+    }
     if (data.action === "reconcile_saved_bill_stock") {
       var savedBillSheet = getOrCreateBillSheet(SpreadsheetApp.getActiveSpreadsheet());
       ensureBranchColumn(savedBillSheet);
@@ -737,6 +766,32 @@ function getOrCreatePartsSheet(ss, name) {
 }
 
 function normalizeBranch(value) { return String(value || "Main Branch").trim() || "Main Branch"; }
+
+function deleteExpiredBranchMessages(sheet, now) {
+  var lastRow = sheet.getLastRow();
+  if (lastRow < 2) return;
+  var cutoff = now.getTime() - 72 * 60 * 60 * 1000;
+  var timestamps = sheet.getRange(2, 2, lastRow - 1, 1).getValues();
+  for (var i = timestamps.length - 1; i >= 0; i--) {
+    var timestamp = timestamps[i][0];
+    var timestampMs = timestamp instanceof Date ? timestamp.getTime() : new Date(timestamp).getTime();
+    if (!isNaN(timestampMs) && timestampMs < cutoff) sheet.deleteRow(i + 2);
+  }
+}
+
+function installBranchMessageCleanupTrigger() {
+  var hasCleanupTrigger = ScriptApp.getProjectTriggers().some(function(trigger) {
+    return trigger.getHandlerFunction() === "cleanupExpiredBranchMessages";
+  });
+  if (!hasCleanupTrigger) ScriptApp.newTrigger("cleanupExpiredBranchMessages").timeBased().everyMinutes(15).create();
+  return hasCleanupTrigger ? "Cleanup trigger already installed." : "Cleanup trigger installed.";
+}
+
+function cleanupExpiredBranchMessages() {
+  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet();
+  var sheet = spreadsheet && spreadsheet.getSheetByName("Branch Messages");
+  if (sheet) deleteExpiredBranchMessages(sheet, new Date());
+}
 
 // Add a Branch column without changing existing records; old records stay under Main Branch.
 function ensureBranchColumn(sheet) {

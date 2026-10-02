@@ -106,6 +106,26 @@
     </div>
   </div>
 
+  <button id="branch-chat-toggle" class="branch-chat-toggle" type="button" aria-label="Open branch chat" aria-expanded="false" onclick="toggleBranchChat()" style="position:fixed;right:22px;bottom:22px;z-index:10001;display:flex;visibility:visible;opacity:1;background:linear-gradient(135deg,#0284c7,#2563eb);color:#fff;border:0;border-radius:28px;padding:0 19px;min-height:52px;align-items:center;gap:10px;box-shadow:0 9px 24px rgba(37,99,235,.32);cursor:pointer">
+    <i class="fa-solid fa-comments" aria-hidden="true"></i><span>Branch Chat</span>
+  </button>
+  <section id="branch-chat-panel" class="branch-chat-panel hidden" aria-label="Branch conversation" aria-hidden="true">
+    <header class="branch-chat-header">
+      <div><strong>Branch Chat</strong><small id="branch-chat-subtitle">Talk to another branch</small></div>
+      <button type="button" class="branch-chat-close" aria-label="Close chat" onclick="toggleBranchChat(false)"><i class="fa-solid fa-xmark"></i></button>
+    </header>
+    <div id="branch-chat-target-wrap" class="branch-chat-target form-group">
+      <label for="branch-chat-target">Conversation</label>
+      <select id="branch-chat-target" onchange="loadBranchChatMessages()"></select>
+    </div>
+    <div id="branch-chat-messages" class="branch-chat-messages" role="log" aria-live="polite"><div class="branch-chat-empty">Loading conversations…</div></div>
+    <form id="branch-chat-form" class="branch-chat-form">
+      <textarea id="branch-chat-input" maxlength="1000" rows="2" placeholder="Write a message…" required></textarea>
+      <button id="branch-chat-send" type="submit" aria-label="Send message"><i class="fa-solid fa-paper-plane"></i></button>
+    </form>
+    <div id="branch-chat-status" class="branch-chat-status" role="status" aria-live="polite"></div>
+  </section>
+
   <!-- HIDDEN INVOICE TEMPLATE (FOR PRINTING FROM ANY PAGE) -->
   <div id="printable-invoice-area" class="hidden">
     <div class="invoice-box">
@@ -209,6 +229,7 @@
   <script src="js/report.js"></script>
   <script src="js/spare-parts.js"></script>
   <script src="js/dropdown.js"></script>
+  <script src="js/branch-chat.js"></script>
 
 </body>
 </html>
