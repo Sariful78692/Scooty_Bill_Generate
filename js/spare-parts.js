@@ -164,6 +164,19 @@ window.renderVehicleStockReport = function() {
   const rows = Array.from(groups.values()).sort((a, b) => a.company.localeCompare(b.company) || a.model.localeCompare(b.model) || a.colour.localeCompare(b.colour));
   const total = key => rows.reduce((sum, row) => sum + row[key], 0);
   app.innerHTML = `<section class="content-section"><h1><i class="fa-solid fa-chart-column"></i> Stock Report</h1><div class="dashboard-cards" style="margin:18px 0 24px"><div class="stat-card"><div class="stat-info"><span class="stat-title">Scooty Purchased</span><h2 class="stat-value">${total("purchased")}</h2></div></div><div class="stat-card"><div class="stat-info"><span class="stat-title">Scooty Sales</span><h2 class="stat-value">${total("sales")}</h2></div></div><div class="stat-card"><div class="stat-info"><span class="stat-title">Present Stock</span><h2 class="stat-value">${total("present")}</h2></div></div></div><h3 style="margin:0 0 14px">Company, Model &amp; Colour-wise Scooty Stock</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px">${rows.length ? rows.map(row => `<article style="background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:18px;box-shadow:0 2px 8px rgba(15,23,42,.06);border-top:4px solid #2563eb"><div style="font-size:12px;color:#64748b">${escapeHtml(row.company)}</div><h3 style="margin:4px 0 12px;color:#0f172a">${escapeHtml(row.model)} <span style="font-weight:500;color:#475569">· ${escapeHtml(row.colour)}</span></h3><div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;text-align:center"><div style="padding:9px;background:#f8fafc;border-radius:8px"><small>Purchased</small><strong style="display:block;font-size:20px">${row.purchased}</strong></div><div style="padding:9px;background:#fff7ed;border-radius:8px"><small>Sales</small><strong style="display:block;font-size:20px">${row.sales}</strong></div><div style="padding:9px;background:#eff6ff;border-radius:8px"><small>Present</small><strong style="display:block;font-size:20px">${row.present}</strong></div></div><div style="margin-top:14px;font-size:13px;line-height:1.7"><strong>Available Scooty Details (${row.units.length})</strong>${row.units.length ? row.units.map((unit, index) => `<div style="padding:8px 0;border-bottom:1px solid #e2e8f0"><strong>${index + 1}.</strong> Chassis No: ${escapeHtml(unit.chassis)}<br><span style="padding-left:18px">Engine No: ${escapeHtml(unit.engine)}</span></div>`).join("") : `<div>Currently no stock available.</div>`}</div></article>`).join("") : `<p class="text-center">No scooty stock or sales data found.</p>`}</div></section>`;
+  const summaryCards = app.querySelectorAll(".dashboard-cards > .stat-card");
+  const summaries = [
+    ["purchase", "fa-cart-flatbed", "Purchased units"],
+    ["sales", "fa-arrow-trend-up", "Sold units"],
+    ["present", "fa-warehouse", "Available now"]
+  ];
+  summaryCards.forEach((card, index) => {
+    const [type, icon, description] = summaries[index];
+    card.classList.add("stock-report-summary", `stock-report-summary-${type}`);
+    card.insertAdjacentHTML("afterbegin", `<span class="stock-report-summary-icon"><i class="fa-solid ${icon}" aria-hidden="true"></i></span>`);
+    card.querySelector(".stat-info")?.insertAdjacentHTML("beforeend", `<span class="stock-report-summary-caption">${description}</span>`);
+  });
+  app.querySelector(".dashboard-cards")?.classList.add("stock-report-summary-grid");
 };
 
 window.editVehicleStock = function(id) {

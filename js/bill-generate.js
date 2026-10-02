@@ -50,15 +50,55 @@ window.confirmPrintSelectedBill = function() {
   if (billId) printExistingBill(billId);
 };
 
-window.renderBillCustomerTable = function(list) {
+let billCustomerCurrentPage = 1;
+let billCustomerPageSize = "10";
+let billCustomerRows = [];
+
+window.getBillCustomerRows = function(list = customerDataList) {
+  const rows = [...(list || [])];
+  const knownIds = new Set((customerDataList || []).map(customer => String(customer["ID"] || "").trim()).filter(Boolean));
+  const includedIds = new Set(rows.map(customer => String(customer["ID"] || "").trim()).filter(Boolean));
+  const missingCustomers = new Map();
+  (billDataList || []).forEach(bill => {
+    const id = String(bill["Customer ID"] || "").trim();
+    if (!id || knownIds.has(id)) return;
+    const previous = missingCustomers.get(id);
+    missingCustomers.set(id, {
+      "ID": id,
+      "Customer Name": bill["Customer Name"] || "Unknown Customer",
+      "Mobile No": "",
+      "Vehicle": bill.Item || "",
+      "Vehicle Company": bill["Vehicle Company"] || "",
+      "Vehicle Model": bill["Vehicle Model"] || "",
+      "Archived": "TRUE",
+      _missingCustomerRecord: true,
+      _billDate: bill.Date || previous?._billDate || ""
+    });
+  });
+  missingCustomers.forEach(customer => { if (!includedIds.has(customer.ID)) rows.push(customer); });
+  return rows;
+};
+
+window.renderBillCustomerTable = function(list, resetPage = true) {
   const tbody = document.getElementById("bill-customer-tbody");
   if (!tbody) return;
+  billCustomerRows = [...(list || [])];
+  if (resetPage) billCustomerCurrentPage = 1;
   const tableHead = document.querySelector("#bill-customer-table thead");
   if (tableHead) tableHead.innerHTML = `<tr><th>Name</th><th>Mobile</th><th>Vehicle</th><th>Company</th><th>Model</th><th>Action</th></tr>`;
   tbody.innerHTML = "";
-  if(list.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="text-center">No customers.</td></tr>`; return; }
+  const pageSize = billCustomerPageSize === "all" ? Math.max(billCustomerRows.length, 1) : Math.max(1, Number(billCustomerPageSize) || 10);
+  const pageCount = Math.max(1, Math.ceil(billCustomerRows.length / pageSize));
+  billCustomerCurrentPage = Math.min(Math.max(1, billCustomerCurrentPage), pageCount);
+  const startIndex = (billCustomerCurrentPage - 1) * pageSize;
+  const pageRows = billCustomerRows.slice(startIndex, startIndex + pageSize);
+  const rangeStart = pageRows.length ? startIndex + 1 : 0;
+  const rangeEnd = pageRows.length ? startIndex + pageRows.length : 0;
+  const pagination = document.getElementById("bill-customer-pagination");
+  if (pagination) pagination.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;padding:12px 16px;border:1px solid #dbe3ee;border-radius:10px;background:#f8fafc;color:#526783;"><label style="display:flex;align-items:center;gap:10px;">Customers per page <select onchange="changeBillCustomerPageSize(this.value)" style="padding:9px 12px;border:1px solid #cbd5e1;border-radius:8px;background:white;"><option value="10" ${billCustomerPageSize === "10" ? "selected" : ""}>10</option><option value="25" ${billCustomerPageSize === "25" ? "selected" : ""}>25</option><option value="50" ${billCustomerPageSize === "50" ? "selected" : ""}>50</option><option value="100" ${billCustomerPageSize === "100" ? "selected" : ""}>100</option><option value="all" ${billCustomerPageSize === "all" ? "selected" : ""}>All</option></select></label><div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;"><span>Showing ${rangeStart}–${rangeEnd} of ${billCustomerRows.length}</span><button type="button" class="btn-secondary" onclick="changeBillCustomerPage(-1)" ${billCustomerCurrentPage <= 1 ? "disabled" : ""}>Previous</button><button type="button" class="btn-secondary" onclick="changeBillCustomerPage(1)" ${billCustomerCurrentPage >= pageCount ? "disabled" : ""}>Next</button></div></div>`;
+  if(pageRows.length === 0) { tbody.innerHTML = `<tr><td colspan="6" class="text-center">No customers.</td></tr>`; return; }
   
-  list.forEach(cust => {
+  pageRows.forEach(cust => {
     const tr = document.createElement("tr");
 
     const custId = String(cust["ID"] || "").trim();
@@ -69,14 +109,16 @@ window.renderBillCustomerTable = function(list) {
     const company = latestBill?.["Vehicle Company"] || cust["Vehicle Company"] || "-";
     const model = latestBill?.["Vehicle Model"] || cust["Vehicle Model"] || "-";
 
-    let actionBtns = `<button type="button" class="btn-primary" onclick="openBillCreatePage('${custId}')">Bill Generate</button>`;
+    let actionBtns = cust._missingCustomerRecord
+      ? `<span style="color:#b45309;font-weight:600">Profile deleted; saved bills retained</span>`
+      : `<button type="button" class="btn-primary" onclick="openBillCreatePage('${custId}')">Bill Generate</button>`;
     
     if (custBills.length > 0) {
       const latestBill = custBills[custBills.length - 1]; 
       const latestBillId = String(latestBill["Bill ID"] || "").trim();
       if (latestBillId) {
         actionBtns += ` <button type="button" class="btn-print" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Print Bill" onclick="handlePrintClick('${custId}')"><i class="fa-solid fa-print"></i></button>`;
-        if (String(currentBranch).trim().toLowerCase() === "main branch") {
+        if (!cust._missingCustomerRecord && String(currentBranch).trim().toLowerCase() === "main branch") {
           actionBtns += ` <button type="button" class="btn-edit" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Edit Bill" onclick="editGeneratedBill('${latestBillId}')"><i class="fa-solid fa-pen"></i></button>`;
           actionBtns += ` <button type="button" class="btn-delete" style="padding: 10px; font-size: 13px; margin-left: 5px;" title="Delete Bill" onclick="deleteGeneratedBill('${latestBillId}')"><i class="fa-solid fa-trash"></i></button>`;
         }
@@ -84,7 +126,7 @@ window.renderBillCustomerTable = function(list) {
     }
 
     tr.innerHTML = `
-      <td><strong>${cust["Customer Name"] || ""}</strong></td>
+      <td><strong>${cust["Customer Name"] || ""}</strong>${["true", "yes", "1", "deleted"].includes(String(cust.Archived || "").trim().toLowerCase()) ? '<br><small style="color:#b45309;font-weight:700">Archived customer</small>' : ""}</td>
       <td>${cust["Mobile No"] || ""}</td>
       <td><span class="badge">${cust["Vehicle"] || ""}</span></td>
       <td>${company}</td>
@@ -95,9 +137,20 @@ window.renderBillCustomerTable = function(list) {
   });
 };
 
+window.changeBillCustomerPage = function(delta) {
+  billCustomerCurrentPage += delta;
+  renderBillCustomerTable(billCustomerRows, false);
+};
+
+window.changeBillCustomerPageSize = function(size) {
+  billCustomerPageSize = size;
+  billCustomerCurrentPage = 1;
+  renderBillCustomerTable(billCustomerRows, false);
+};
+
 window.filterBillCustomers = function() {
   const query = document.getElementById("billSearchInput").value.toLowerCase();
-  const filtered = customerDataList.filter(c => 
+  const filtered = getBillCustomerRows(customerDataList).filter(c =>
     (c["Customer Name"] || "").toLowerCase().includes(query) || (c["Mobile No"] || "").toLowerCase().includes(query)
   );
   renderBillCustomerTable(filtered.reverse());

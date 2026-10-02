@@ -5,9 +5,8 @@ window.filterCustomerView = function() {
   const title = document.getElementById("details-view-title");
   if(!title) return;
   
-  let filtered = currentFilter !== "all" 
-      ? customerDataList.filter(c => (c["Vehicle"] || "").trim() === currentFilter) 
-      : customerDataList;
+  let filtered = customerDataList.filter(c => !["true", "yes", "1", "deleted"].includes(String(c.Archived || "").trim().toLowerCase()));
+  if (currentFilter !== "all") filtered = filtered.filter(c => (c["Vehicle"] || "").trim() === currentFilter);
       
   title.innerText = currentFilter !== "all" ? `Customer Details - ${currentFilter}` : "Customer Details (All)";
   
@@ -20,9 +19,8 @@ window.filterCustomerDetailsTable = function() {
   const query = document.getElementById("customerSearchInput").value.toLowerCase().trim();
   
   // বর্তমান ফিল্টার (Scooty, Bike, Cycle বা All) অনুযায়ী ডেটা নেওয়া হচ্ছে
-  let filtered = currentFilter !== "all" 
-      ? customerDataList.filter(c => (c["Vehicle"] || "").trim() === currentFilter) 
-      : customerDataList;
+  let filtered = customerDataList.filter(c => !["true", "yes", "1", "deleted"].includes(String(c.Archived || "").trim().toLowerCase()));
+  if (currentFilter !== "all") filtered = filtered.filter(c => (c["Vehicle"] || "").trim() === currentFilter);
 
   // নাম অথবা মোবাইল নাম্বার দিয়ে ফিল্টার করা হচ্ছে
   if (query !== "") {
@@ -183,12 +181,12 @@ window.editCustomer = function(id) {
   });
 };
 window.deleteCustomer = async function(id) {
-  if (!confirm("Are you sure you want to delete this customer?")) return;
+  if (!confirm("Remove this customer from Customer Details? It will remain available in Bill Generate and existing bills will be kept.")) return;
   try {
     const res = await apiFetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "delete", id: id }) });
     const result = await res.json();
     if (result.status === "success") {
-      showToast("Customer deleted successfully!");
+      showToast("Customer removed from Customer Details; Bill Generate record retained.");
       await loadCustomers(true);
       await loadPage("Customer/customer-details.html", "customerDetails", currentFilter || "all");
     } else alert("Failed to delete customer.");

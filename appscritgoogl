@@ -517,7 +517,9 @@ function doPost(e) {
           String(rows[i][0]).trim() ===
           String(data.id).trim() && normalizeBranch(rows[i][customerBranchIndex]) === authBranch
         ) {
-          custSheet.deleteRow(i + 1);
+          var archivedColumn = custSheet.getRange(1, 1, 1, custSheet.getLastColumn()).getDisplayValues()[0].map(function(header) { return String(header).trim(); }).indexOf("Archived");
+          if (archivedColumn < 0) return jsonResponse({status:"error", message:"Customer archive field is missing."});
+          custSheet.getRange(i + 1, archivedColumn + 1).setValue("TRUE");
 
           return ContentService
             .createTextOutput(JSON.stringify({
@@ -590,7 +592,7 @@ function getOrCreateBillSheet(ss) {
 
 // Adds new customer columns without changing or rewriting any existing row.
 function ensureCustomerColumns(sheet) {
-  var required = ["ID", "Customer Name", "Guardian Name", "Gender", "DOB", "Religion", "Aadhaar No", "Mobile No", "Address", "District", "State", "PIN Code", "Vehicle", "Vehicle Company", "Vehicle Model", "Chassis Number", "Engine Number", "Occupation", "Photo URL", "Branch"];
+  var required = ["ID", "Customer Name", "Guardian Name", "Gender", "DOB", "Religion", "Aadhaar No", "Mobile No", "Address", "District", "State", "PIN Code", "Vehicle", "Vehicle Company", "Vehicle Model", "Chassis Number", "Engine Number", "Occupation", "Photo URL", "Branch", "Archived"];
   var lastColumn = sheet.getLastColumn();
   if (lastColumn === 0) {
     sheet.getRange(1, 1, 1, required.length).setValues([required]);
@@ -628,7 +630,7 @@ function customerRowValues(sheet, data, id, photoUrl) {
     "District": data.district, "State": data.state, "PIN Code": data.pin, "Vehicle": data.vehicle,
     "Vehicle Company": data.vehicleCompany, "Vehicle Model": data.vehicleModel,
     "Chassis Number": data.chassisNo, "Engine Number": data.engineNo,
-    "Occupation": data.occupation, "Photo URL": photoUrl, "Branch": normalizeBranch(data.branch)
+    "Occupation": data.occupation, "Photo URL": photoUrl, "Branch": normalizeBranch(data.branch), "Archived": ""
   };
   return headers.map(function(header) { return values[String(header).trim()] !== undefined ? values[String(header).trim()] : ""; });
 }

@@ -1,5 +1,5 @@
 // Paste your NEW deployed Google Apps Script Web App URL here!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzX-JK4BZf9lhwKL1ClbCGgp4-LU5oDQvFTFmFUu7N_VszPK2gmtVrgmRm6Klxol46mJQ/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxzn0REveRYia0fixibsOowwtpcBw_weabHpU5YQ79_CWETiF4d_CB7ztfJYADi-UAtPw/exec";
 
 // Global Variables
 let customerDataList = [];
@@ -388,7 +388,7 @@ window.loadPage = async function(pageUrl, context, filterValue = 'all', updateHa
     if (context === 'customerEntry') initCustomerEntryForm();
     if (context === 'customerDetails') filterCustomerView();
     if (context === 'billGenerate') {
-      renderBillCustomerTable([...customerDataList].reverse());
+      renderBillCustomerTable(getBillCustomerRows([...customerDataList]).reverse());
       if (window.initBillCatalogs) initBillCatalogs();
       if (window.refreshDropdownOptions) refreshDropdownOptions();
     }
@@ -442,7 +442,7 @@ window.loadCustomers = function(forceReload = false) {
       window.dropdownDataList = data.dropdowns || [];
       if (window.refreshDropdownOptions) window.refreshDropdownOptions();
       if (document.getElementById("dashboard-section")) updateDashboardCounts();
-      if (document.getElementById("bill-generate-section")) renderBillCustomerTable([...customerDataList].reverse());
+      if (document.getElementById("bill-generate-section")) renderBillCustomerTable(getBillCustomerRows([...customerDataList]).reverse());
       if (document.getElementById("report-section")) generateReport();
     } catch (error) {
       console.error("Failed to load data:", error);

@@ -1,7 +1,7 @@
 window.updateDashboardCounts = function() {
   let scooty = 0, bike = 0, cycle = 0, totalScootySales = 0;
   const customersById = new Map(customerDataList.map(customer => [String(customer["ID"] || "").trim(), customer]));
-  customerDataList.forEach(c => {
+  customerDataList.filter(c => !["true", "yes", "1", "deleted"].includes(String(c.Archived || "").trim().toLowerCase())).forEach(c => {
     let v = String(c["Vehicle"] || "").trim().toLowerCase();
     if (v === "scooty") scooty++; 
     else if (v === "bike") bike++; 
