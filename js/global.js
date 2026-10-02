@@ -1,5 +1,5 @@
 // Paste your NEW deployed Google Apps Script Web App URL here!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby4XiryrzR8BmYzNSPhVufvDfmORZ7FUTZOWQ-_r-NTZBRwsY9Gntlwjd66ZCqWgR7m/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwBbxSSXfzBss8D_EEqAE_2L30Bfknl5j2IVCXfxil4ksm_JNn3Y36jZtE7rMEeXgwBYA/exec";
 
 // Global Variables
 let customerDataList = [];
@@ -69,8 +69,46 @@ window.openSettings = function() {
   const app = document.getElementById("app-content");
   renderPageWithLoader(() => {
     const isMainBranch = String(currentBranch).trim().toLowerCase() === "main branch";
-    app.innerHTML = `<section class="content-section settings-page"><h1><i class="fa-solid fa-gear"></i> Settings</h1><div class="settings-card"><h3>Branch Login</h3><p>Signed in to <strong>${escapeHtml(currentBranch)}</strong>.</p>${isMainBranch ? `<form id="create-main-user-form"><h3>Create Branch User</h3><div class="form-group"><label for="new-main-branch">Branch Name</label><input id="new-main-branch" name="branch" required maxlength="80" placeholder="e.g. Kolkata Branch"></div><div class="form-group" style="margin-top:14px"><label for="new-main-username">Login ID</label><input id="new-main-username" name="username" autocomplete="username" required maxlength="80"></div><div class="form-group" style="margin-top:14px"><label for="new-main-password">Password</label><input id="new-main-password" name="password" type="password" autocomplete="new-password" required minlength="6" maxlength="128"></div><div class="form-actions"><button class="btn-primary" type="submit">Create User</button></div><p id="create-main-user-message" role="status" aria-live="polite"></p></form><h3 style="margin-top:24px">Branch Users</h3><div class="table-responsive"><table><thead><tr><th>Branch</th><th>Login ID</th><th>Password</th><th>Actions</th></tr></thead><tbody id="main-branch-users"><tr><td colspan="4">Loading...</td></tr></tbody></table></div>` : `<p>User management is available only while signed in to Main Branch.</p>`}</div></section>`;
-    if (isMainBranch) loadMainBranchUsers();
+    app.innerHTML = `<section class="content-section settings-page"><h1><i class="fa-solid fa-gear"></i> Settings</h1><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:20px;align-items:start"><div class="settings-card"><h3>Branch Login</h3><p>Signed in to <strong>${escapeHtml(currentBranch)}</strong>.</p>${isMainBranch ? `<form id="main-credentials-form"><h3>Main Branch Login ID &amp; Password</h3><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;align-items:end"><div class="form-group"><label for="main-login-username">Login ID</label><input id="main-login-username" autocomplete="username" required maxlength="80"></div><div class="form-group"><label for="main-login-password">New Password</label><input id="main-login-password" type="password" autocomplete="new-password" required minlength="6" maxlength="128"></div></div><div class="form-actions"><button class="btn-primary" type="submit">Save Main Branch Login</button></div><p id="main-credentials-message" role="status" aria-live="polite"></p><button type="button" class="btn-edit" id="show-main-credentials">Show saved Login ID and Password</button><p id="saved-main-credentials" hidden></p></form>` : `<p>User management is available only while signed in to Main Branch.</p>`}</div>${isMainBranch ? `<div class="settings-card"><h3>Create Branch User</h3><form id="create-main-user-form"><div class="form-group"><label for="new-main-branch">Branch Name</label><input id="new-main-branch" name="branch" required maxlength="80" placeholder="e.g. Kolkata Branch"></div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;align-items:end;margin-top:14px"><div class="form-group"><label for="new-main-username">Login ID</label><input id="new-main-username" name="username" autocomplete="username" required maxlength="80"></div><div class="form-group"><label for="new-main-password">Password</label><input id="new-main-password" name="password" type="password" autocomplete="new-password" required minlength="6" maxlength="128"></div></div><div class="form-actions"><button class="btn-primary" type="submit">Create User</button></div><p id="create-main-user-message" role="status" aria-live="polite"></p></form><h3 style="margin-top:24px">Branch Users</h3><div class="table-responsive"><table><thead><tr><th>Branch</th><th>Login ID</th><th>Password</th><th>Actions</th></tr></thead><tbody id="main-branch-users"><tr><td colspan="4">Loading...</td></tr></tbody></table></div></div>` : ``}</div></section>`;
+    if (isMainBranch) {
+      loadMainBranchUsers();
+      loadMainBranchCredentials();
+    }
+    const credentialsForm = document.getElementById("main-credentials-form");
+    credentialsForm?.addEventListener("submit", async event => {
+      event.preventDefault();
+      const button = credentialsForm.querySelector('button[type="submit"]');
+      const message = document.getElementById("main-credentials-message");
+      button.disabled = true;
+      message.textContent = "Saving…";
+      try {
+        const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"update_main_branch_credentials", username:document.getElementById("main-login-username").value.trim(), password:document.getElementById("main-login-password").value})});
+        const result = await response.json();
+        if (!response.ok || result.status !== "success") throw new Error(result.message || "Could not update Main Branch login.");
+        const usernameInput = document.getElementById("main-login-username");
+        usernameInput.dataset.savedUsername = usernameInput.value.trim();
+        usernameInput.dataset.savedPassword = document.getElementById("main-login-password").value;
+        document.getElementById("main-login-password").value = "";
+        message.textContent = "Main Branch login updated. Use the new credentials next time you sign in.";
+      } catch (error) {
+        message.textContent = error.message || "Could not connect to the server.";
+      } finally {
+        button.disabled = false;
+      }
+    });
+    document.getElementById("show-main-credentials")?.addEventListener("click", () => {
+      const usernameInput = document.getElementById("main-login-username");
+      const saved = document.getElementById("saved-main-credentials");
+      const button = document.getElementById("show-main-credentials");
+      if (saved.hidden) {
+        saved.textContent = `Saved Login ID: ${usernameInput.dataset.savedUsername || usernameInput.value} | Password: ${usernameInput.dataset.savedPassword || "Unavailable"}`;
+        saved.hidden = false;
+        button.textContent = "Hide saved credentials";
+      } else {
+        saved.hidden = true;
+        button.textContent = "Show saved Login ID and Password";
+      }
+    });
     const form = document.getElementById("create-main-user-form");
     form?.addEventListener("submit", async event => {
       event.preventDefault();
@@ -95,6 +133,22 @@ window.openSettings = function() {
       }
     });
   });
+};
+
+window.loadMainBranchCredentials = async function() {
+  const usernameInput = document.getElementById("main-login-username");
+  if (!usernameInput) return;
+  try {
+    const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"get_main_branch_credentials"})});
+    const result = await response.json();
+    if (result.status !== "success") throw new Error(result.message || "Could not load Main Branch login.");
+    usernameInput.value = result.username || "";
+    usernameInput.dataset.savedUsername = result.username || "";
+    usernameInput.dataset.savedPassword = result.password || "";
+  } catch (error) {
+    const message = document.getElementById("main-credentials-message");
+    if (message) message.textContent = error.message || "Could not connect to the server.";
+  }
 };
 
 window.loadMainBranchUsers = async function() {

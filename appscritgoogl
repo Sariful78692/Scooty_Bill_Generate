@@ -74,6 +74,25 @@ function doPost(e) {
     var authBranch = getAuthenticatedBranch(data.token);
     if (!authBranch) return jsonResponse({status:"error", message:"Session expired. Please log in again."});
     data.branch = authBranch;
+    if (data.action === "get_main_branch_credentials" || data.action === "update_main_branch_credentials") {
+      if (!isMainBranch(authBranch)) return jsonResponse({status:"error", message:"Only Main Branch can manage these credentials."});
+      var mainUsers = ensureBranchUserSheet();
+      var mainRows = mainUsers.getDataRange().getDisplayValues();
+      var mainRow = -1;
+      for (var mi = 1; mi < mainRows.length; mi++) {
+        if (String(mainRows[mi][0]).trim().toLowerCase() === "main branch") { mainRow = mi + 1; break; }
+      }
+      if (mainRow < 0) return jsonResponse({status:"error", message:"Main Branch login was not found."});
+      if (data.action === "get_main_branch_credentials") return jsonResponse({status:"success", username:String(mainRows[mainRow - 1][1]).trim(), password:String(mainRows[mainRow - 1][2] || "")});
+      var mainUsername = String(data.username || "").trim();
+      var mainPassword = String(data.password || "");
+      if (!mainUsername || mainUsername.length > 80) return jsonResponse({status:"error", message:"Enter a login ID up to 80 characters."});
+      if (mainPassword.length < 6 || mainPassword.length > 128) return jsonResponse({status:"error", message:"Password must be 6 to 128 characters."});
+      var mainUsernameTaken = mainRows.slice(1).some(function(row, index) { return index + 2 !== mainRow && String(row[1]).trim().toLowerCase() === mainUsername.toLowerCase(); });
+      if (mainUsernameTaken) return jsonResponse({status:"error", message:"That login ID is already in use."});
+      mainUsers.getRange(mainRow, 2, 1, 2).setValues([[mainUsername, mainPassword]]);
+      return jsonResponse({status:"success"});
+    }
     if (data.action === "create_main_branch_user") {
       if (String(authBranch).trim().toLowerCase() !== "main branch") return jsonResponse({status:"error", message:"Only a Main Branch user can create users."});
       var targetBranch = String(data.targetBranch || "").trim();
