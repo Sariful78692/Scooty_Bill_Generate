@@ -65,7 +65,7 @@ filteredAll = filteredAll.reverse();
   }
 
   const total = filteredAll.reduce((sum, bill) => sum + parseAmount(bill["Total Amount"]), 0);
-  if(document.getElementById("reportTotalSales")) document.getElementById("reportTotalSales").innerText = total.toFixed(2);
+  if(document.getElementById("reportTotalSales")) document.getElementById("reportTotalSales").innerText = formatIndianAmount(total);
   
   if (resetPage) reportCurrentPage = 1;
   const limit = document.getElementById("reportPageSize")?.value || "10";
@@ -100,7 +100,7 @@ filteredAll = filteredAll.reverse();
       <td><span class="badge">${safeDisplay(bill["Item"])}</span><br><small>${safeDisplay(bill["Vehicle Company"])}</small></td>
       <td>${safeDisplay(bill["Vehicle Model"])}</td>
       <td>${safeDisplay(bill["Vehicle Colour"])}</td>
-      <td>₹${amt.toFixed(2)}</td>
+      <td>₹${formatIndianAmount(amt)}</td>
       <td>${actions}</td>`;
     tbody.appendChild(tr);
   });

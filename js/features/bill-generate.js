@@ -32,7 +32,7 @@ window.handlePrintClick = function(custId) {
   sortedBills.forEach(b => {
     const opt = document.createElement("option");
     opt.value = b["Bill ID"];
-    opt.text = `${b["Bill ID"]} — ${b["Date"] || "No Date"} — ₹${b["Total Amount"] || "0"}`;
+    opt.text = `${b["Bill ID"]} — ${b["Date"] || "No Date"} — ₹${formatIndianAmount(b["Total Amount"] || 0)}`;
     sel.appendChild(opt);
   });
 
@@ -659,15 +659,15 @@ function createDynamicTaxHTML(amount, cgstRate, sgstRate, igstRate) {
   const igstAmount = roundMoney(amount * igstRate / 100);
   const totalGstAmount = roundMoney(cgstAmount + sgstAmount + igstAmount);
   let html = "";
-  if (cgstRate > 0) html += `<div style="margin: 2px 0;">CGST @ ${cgstRate}%: ₹${cgstAmount.toFixed(2)}</div>`;
-  if (sgstRate > 0) html += `<div style="margin: 2px 0;">SGST @ ${sgstRate}%: ₹${sgstAmount.toFixed(2)}</div>`;
-  if (igstRate > 0) html += `<div style="margin: 2px 0;">IGST @ ${igstRate}%: ₹${igstAmount.toFixed(2)}</div>`;
-  if (totalGstAmount > 0) html += `<div style="font-weight: bold; margin-top: 4px;">Total GST Amount: ₹${totalGstAmount.toFixed(2)}</div>`;
+  if (cgstRate > 0) html += `<div style="margin: 2px 0;">CGST @ ${cgstRate}%: ₹${formatIndianAmount(cgstAmount)}</div>`;
+  if (sgstRate > 0) html += `<div style="margin: 2px 0;">SGST @ ${sgstRate}%: ₹${formatIndianAmount(sgstAmount)}</div>`;
+  if (igstRate > 0) html += `<div style="margin: 2px 0;">IGST @ ${igstRate}%: ₹${formatIndianAmount(igstAmount)}</div>`;
+  if (totalGstAmount > 0) html += `<div style="font-weight: bold; margin-top: 4px;">Total GST Amount: ₹${formatIndianAmount(totalGstAmount)}</div>`;
   return html;
 }
 
 function createInvoiceRow(data) {
-  return `<tr><td><strong>${data.item}</strong><br><small>Company: ${data.company}</small><br><small>Model: ${data.model}</small><br><small>Colour: ${data.colour || "-"}</small><br><small>Chassis Number: ${data.chassis}</small><br><small>Motor Number: ${data.engine}</small></td><td style="text-align: center;">${data.hsn}</td><td style="text-align: center;">${data.quantity} PCS</td><td style="text-align: right;">₹${data.rate.toFixed(2)}</td><td style="text-align: right;">₹${data.amount.toFixed(2)}</td></tr>`;
+  return `<tr><td><strong>${data.item}</strong><br><small>Company: ${data.company}</small><br><small>Model: ${data.model}</small><br><small>Colour: ${data.colour || "-"}</small><br><small>Chassis Number: ${data.chassis}</small><br><small>Motor Number: ${data.engine}</small></td><td style="text-align: center;">${data.hsn}</td><td style="text-align: center;">${formatIndianNumber(data.quantity)} PCS</td><td style="text-align: right;">₹${formatIndianAmount(data.rate)}</td><td style="text-align: right;">₹${formatIndianAmount(data.amount)}</td></tr>`;
 }
 
 function showInvoiceAndPrint() {
@@ -737,8 +737,8 @@ window.printExistingBill = function (billId) {
   const taxBox = document.getElementById("taxBreakdownList");
   if (taxBox) taxBox.innerHTML = createDynamicTaxHTML(amount, cgst, sgst, igst);
 
-  setInvoiceText("invSubtotal", amount.toFixed(2)); 
-  setInvoiceText("invFinalTotal", total.toFixed(2)); 
+  setInvoiceText("invSubtotal", formatIndianAmount(amount));
+  setInvoiceText("invFinalTotal", formatIndianAmount(total));
   setInvoiceText("invTotalInWords", convertNumberToWords(total));
   setInvoiceText("invBankName", bill["Bank Name"] || ""); 
   setInvoiceText("invIfsc", bill["Bank IFSC"] || ""); 

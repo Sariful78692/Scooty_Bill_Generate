@@ -5,6 +5,8 @@ body { background-color: #f4f6f9; color: #333; overflow-x: hidden; }
 .content-section h1 { margin-bottom: 20px; font-size: 24px; color: #0f172a; }
 .hidden { display: none !important; }
 .text-center { text-align: center; }
+.bill-search-filters { display: flex; align-items: end; gap: 15px; margin-bottom: 20px; }
+.bill-search-filters .search-bar-container { flex: 1; min-width: 0; }
 
 /* Floating branch-to-branch chat */
 .branch-chat-toggle { position: fixed; right: 22px; bottom: 22px; z-index: 10001; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 19px; border: 0; border-radius: 28px; background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; font-size: 14px; font-weight: 700; box-shadow: 0 9px 24px rgba(37, 99, 235, .32); cursor: pointer; transition: transform .22s ease, box-shadow .22s ease; }
@@ -62,6 +64,8 @@ body { background-color: #f4f6f9; color: #333; overflow-x: hidden; }
   .main-content { padding: 16px 12px; }
   #app-content, .content-section { width: 100%; min-width: 0; }
   .content-section h1 { font-size: 21px; line-height: 1.25; overflow-wrap: anywhere; }
+  .bill-search-filters { align-items: stretch; flex-direction: column; gap: 10px; }
+  .bill-search-filters #bill-branch-filter-group { width: 100%; }
   .form-actions { flex-wrap: wrap; gap: 10px; }
   .form-actions > button { flex: 1 1 140px; }
   .btn-primary, .btn-secondary, .btn-danger, .btn-print { min-height: 42px; }

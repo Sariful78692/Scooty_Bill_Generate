@@ -54,9 +54,9 @@ window.updateDashboardCounts = function() {
     if (isMonth) monthSales += amt;
   });
 
-  if(document.getElementById("sales-today")) document.getElementById("sales-today").innerText = todaySales.toFixed(2);
+  if(document.getElementById("sales-today")) document.getElementById("sales-today").innerText = formatIndianAmount(todaySales);
   if(document.getElementById("today-scooty-sales")) document.getElementById("today-scooty-sales").innerText = todayScootySales;
-  if(document.getElementById("sales-month")) document.getElementById("sales-month").innerText = monthSales.toFixed(2);
+  if(document.getElementById("sales-month")) document.getElementById("sales-month").innerText = formatIndianAmount(monthSales);
   renderDashboardCharts(scooty, bike, cycle, monthSales);
 };
 
@@ -128,7 +128,7 @@ window.renderDashboardCharts = function(scooty, bike, cycle, monthSales) {
           y: { 
             beginAtZero: true, 
             grid: { color: '#e2e8f0', borderDash: [5, 5], drawBorder: false }, // ব্যাকগ্রাউন্ড ড্যাশ দাগ
-            ticks: { callback: function(val) { return '₹' + val; } } 
+            ticks: { callback: function(val) { return '₹' + formatIndianNumber(val); } } 
           } 
         } 
       }

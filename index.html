@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -21,37 +22,46 @@
   <link rel="stylesheet" href="css/invoice-print.css">
 
 </head>
+
 <body>
 
   <!-- App Container -->
   <div class="app-container">
 
-   <!-- Sidebar Menu -->
+    <!-- Sidebar Menu -->
     <aside class="sidebar">
-      
+
       <!-- Brand & Logo Section -->
-      <div class="brand" style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 15px;">
-        <div style="width: 85px; height: 85px; background-color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.25); padding: 5px;">
+      <div class="brand"
+        style="display: flex; flex-direction: column; align-items: center; gap: 10px; padding-top: 15px;">
+        <div
+          style="width: 85px; height: 85px; background-color: #ffffff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.25); padding: 5px;">
           <img src="assets/scooty1.png" alt="Dino Scooty Logo" style="width: 100%; height: 100%; object-fit: contain;">
         </div>
-        <h2 style="font-size: 14px; text-align: center; margin: 0; line-height: 1.4;">DINO ELECTRIC SCOOTY AND CYCLE SHOP</h2>
+        <h2 style="font-size: 14px; text-align: center; margin: 0; line-height: 1.4;">DINO ELECTRIC SCOOTY AND CYCLE
+          SHOP</h2>
       </div>
-      <div style="padding: 12px 15px 4px; color: #fff;"><small style="opacity:.8;">Logged in branch</small><div id="current-branch-label" style="font-weight:bold;padding-top:4px;"></div></div>
-      <button class="mobile-nav-toggle" type="button" onclick="toggleMobileNav()" aria-expanded="false" aria-controls="primary-navigation"><i class="fa-solid fa-bars"></i><span>Menu</span></button>
-      
+      <div class="sidebar-branch-info"><small>Logged in branch</small>
+        <div id="current-branch-label"></div>
+      </div>
+      <button class="mobile-nav-toggle" type="button" onclick="toggleMobileNav()" aria-expanded="false"
+        aria-controls="primary-navigation"><i class="fa-solid fa-bars"></i><span>Menu</span></button>
+
       <ul class="nav-menu" id="primary-navigation">
         <li class="nav-item">
           <a href="#dashboard" class="nav-link active"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
         </li>
         <li class="nav-item has-submenu">
-          <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-users"></i> Customer Info <i class="fa-solid fa-chevron-down arrow"></i></a>
+          <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-users"></i> Customer Info
+            <i class="fa-solid fa-chevron-down arrow"></i></a>
           <ul class="submenu">
             <li><a href="#customer-entry">Customer Entry</a></li>
             <li><a href="#customer-details">Customer Details</a></li>
           </ul>
         </li>
         <li class="nav-item has-submenu">
-          <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-motorcycle"></i> Vehicle <i class="fa-solid fa-chevron-down arrow"></i></a>
+          <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-motorcycle"></i> Vehicle <i
+              class="fa-solid fa-chevron-down arrow"></i></a>
           <ul class="submenu" id="vehicle-submenu-list">
             <li><a href="#customer-details/Scooty">Scooty</a></li>
             <li><a href="#customer-details/Bike">Bike</a></li>
@@ -65,14 +75,16 @@
           <a href="#report" class="nav-link"><i class="fa-solid fa-file-lines"></i> Daily Report</a>
         </li>
         <li class="nav-item has-submenu">
-          <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-warehouse"></i> Stock Management <i class="fa-solid fa-chevron-down arrow"></i></a>
+          <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-warehouse"></i> Stock
+            Management <i class="fa-solid fa-chevron-down arrow"></i></a>
           <ul class="submenu">
             <li><a href="#stock-management">Stock Entry</a></li>
             <li><a href="#stock-report">Stock Report</a></li>
           </ul>
         </li>
         <li class="nav-item has-submenu">
-          <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-gears"></i> Spare Parts <i class="fa-solid fa-chevron-down arrow"></i></a>
+          <a href="javascript:void(0)" class="nav-link submenu-toggle"><i class="fa-solid fa-gears"></i> Spare Parts <i
+              class="fa-solid fa-chevron-down arrow"></i></a>
           <ul class="submenu">
             <li><a href="#spareParts-purchase">Purchase Entry</a></li>
             <li><a href="#spareParts-sale">Sales Entry</a></li>
@@ -82,11 +94,14 @@
       </ul>
 
       <!-- Settings and Logout Buttons -->
-      <div class="bottom-actions" style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px;">
-        <button class="settings-link" onclick="openSettings()" style="flex: 1; border: 0; border-radius: 6px; padding: 10px 5px; background: #0ea5e9; color: #fff; cursor: pointer; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 6px;">
+      <div class="bottom-actions"
+        style="margin-top: auto; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 15px;">
+        <button class="settings-link" onclick="openSettings()"
+          style="flex: 1; border: 0; border-radius: 6px; padding: 10px 5px; background: #0ea5e9; color: #fff; cursor: pointer; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 6px;">
           <i class="fa-solid fa-gear"></i> Settings
         </button>
-        <button class="logout-side" onclick="logout()" style="flex: 1; border: 0; border-radius: 6px; padding: 10px 5px; background: #ef4444; color: #fff; cursor: pointer; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 6px;">
+        <button class="logout-side" onclick="logout()"
+          style="flex: 1; border: 0; border-radius: 6px; padding: 10px 5px; background: #ef4444; color: #fff; cursor: pointer; font-size: 14px; font-weight: bold; display: flex; align-items: center; justify-content: center; gap: 6px;">
           <i class="fa-solid fa-right-from-bracket"></i> Logout
         </button>
       </div>
@@ -107,22 +122,28 @@
     </div>
   </div>
 
-  <button id="branch-chat-toggle" class="branch-chat-toggle" type="button" aria-label="Open branch chat" aria-expanded="false" onclick="toggleBranchChat()" style="position:fixed;right:22px;bottom:22px;z-index:10001;display:flex;visibility:visible;opacity:1;background:linear-gradient(135deg,#0284c7,#2563eb);color:#fff;border:0;border-radius:28px;padding:0 19px;min-height:52px;align-items:center;gap:10px;box-shadow:0 9px 24px rgba(37,99,235,.32);cursor:pointer">
+  <button id="branch-chat-toggle" class="branch-chat-toggle" type="button" aria-label="Open branch chat"
+    aria-expanded="false" onclick="toggleBranchChat()"
+    style="position:fixed;right:22px;bottom:22px;z-index:10001;display:flex;visibility:visible;opacity:1;background:linear-gradient(135deg,#0284c7,#2563eb);color:#fff;border:0;border-radius:28px;padding:0 19px;min-height:52px;align-items:center;gap:10px;box-shadow:0 9px 24px rgba(37,99,235,.32);cursor:pointer">
     <i class="fa-solid fa-comments" aria-hidden="true"></i><span>Branch Chat</span>
   </button>
   <section id="branch-chat-panel" class="branch-chat-panel hidden" aria-label="Branch conversation" aria-hidden="true">
     <header class="branch-chat-header">
       <div><strong>Branch Chat</strong><small id="branch-chat-subtitle">Talk to another branch</small></div>
-      <button type="button" class="branch-chat-close" aria-label="Close chat" onclick="toggleBranchChat(false)"><i class="fa-solid fa-xmark"></i></button>
+      <button type="button" class="branch-chat-close" aria-label="Close chat" onclick="toggleBranchChat(false)"><i
+          class="fa-solid fa-xmark"></i></button>
     </header>
     <div id="branch-chat-target-wrap" class="branch-chat-target form-group">
       <label for="branch-chat-target">Conversation</label>
       <select id="branch-chat-target" onchange="loadBranchChatMessages()"></select>
     </div>
-    <div id="branch-chat-messages" class="branch-chat-messages" role="log" aria-live="polite"><div class="branch-chat-empty">Loading conversations…</div></div>
+    <div id="branch-chat-messages" class="branch-chat-messages" role="log" aria-live="polite">
+      <div class="branch-chat-empty">Loading conversations…</div>
+    </div>
     <form id="branch-chat-form" class="branch-chat-form">
       <textarea id="branch-chat-input" maxlength="1000" rows="2" placeholder="Write a message…" required></textarea>
-      <button id="branch-chat-send" type="submit" aria-label="Send message"><i class="fa-solid fa-paper-plane"></i></button>
+      <button id="branch-chat-send" type="submit" aria-label="Send message"><i
+          class="fa-solid fa-paper-plane"></i></button>
     </form>
     <div id="branch-chat-status" class="branch-chat-status" role="status" aria-live="polite"></div>
   </section>
@@ -132,7 +153,8 @@
     <div class="invoice-box">
       <div class="inv-header">
         <h3>DINO ELECTRIC SCOOTY AND CYCLE SHOP</h3>
-        <p>Ghola Bazar, PO - Doltala Ghola, Betberia Dhosa Road, PS - Baruipur, South 24 parganas, West Bengal, 743376 Mobile: 8167649072 Proprietor Name: RUPSAHANA MOLLA</p>
+        <p>Ghola Bazar, PO - Doltala Ghola, Betberia Dhosa Road, PS - Baruipur, South 24 parganas, West Bengal, 743376
+          Mobile: 8167649072 Proprietor Name: RUPSAHANA MOLLA</p>
         <p>Email: dinoelectricscooty@gmail.com</p>
       </div>
       <div class="inv-meta">
@@ -146,13 +168,24 @@
         <p><strong>Address:</strong> <span id="invAddress"></span></p>
       </div>
       <!-- ✅ নতুন: Battery & Charger Details বক্স -->
-<div class="inv-battery-charger" style="margin: 12px 0; padding: 10px; border: 1px dashed #94a3b8; border-radius: 6px; font-size: 13px;">
-  <p style="margin: 0 0 4px;"><strong>Battery & Charger Details</strong></p>
-  <p style="margin: 2px 0;">Battery: <span id="invBattery">-</span> &nbsp; Battery Serial No: <span id="invBatterySerial">-</span> &nbsp; Warranty: <span id="invWarranty">-</span></p>
-  <p style="margin: 2px 0;">Charger: <span id="invCharger">-</span> &nbsp; Charger Serial No: <span id="invChargerSerial">-</span></p>
-</div>
+      <div class="inv-battery-charger"
+        style="margin: 12px 0; padding: 10px; border: 1px dashed #94a3b8; border-radius: 6px; font-size: 13px;">
+        <p style="margin: 0 0 4px;"><strong>Battery & Charger Details</strong></p>
+        <p style="margin: 2px 0;">Battery: <span id="invBattery">-</span> &nbsp; Battery Serial No: <span
+            id="invBatterySerial">-</span> &nbsp; Warranty: <span id="invWarranty">-</span></p>
+        <p style="margin: 2px 0;">Charger: <span id="invCharger">-</span> &nbsp; Charger Serial No: <span
+            id="invChargerSerial">-</span></p>
+      </div>
       <table class="inv-table">
-        <thead><tr><th>ITEMS</th><th>HSN</th><th>QTY.</th><th>RATE</th><th>AMOUNT</th></tr></thead>
+        <thead>
+          <tr>
+            <th>ITEMS</th>
+            <th>HSN</th>
+            <th>QTY.</th>
+            <th>RATE</th>
+            <th>AMOUNT</th>
+          </tr>
+        </thead>
         <tbody id="invTableBody"></tbody>
       </table>
       <div class="inv-footer-section">
@@ -166,24 +199,32 @@
         </div>
         <div class="inv-totals">
           <div id="taxBreakdownList" style="font-size: 13px; text-align: right; margin-bottom: 5px;"></div>
-          <p style="font-size: 15px; border-top: 1px solid #333; padding-top: 5px;"><strong>Grand Total Amount: ₹<span id="invFinalTotal"></span></strong></p>
+          <p style="font-size: 15px; border-top: 1px solid #333; padding-top: 5px;"><strong>Grand Total Amount: ₹<span
+                id="invFinalTotal"></span></strong></p>
         </div>
       </div>
-      <div class="inv-in-words" style="margin-top: 15px; font-size: 13px; border-top: 1px dashed #ccc; padding-top: 8px;">
-        <p><strong>Total Amount (In Words):</strong> <span id="invTotalInWords" style="text-transform: capitalize;"></span></p>
+      <div class="inv-in-words"
+        style="margin-top: 15px; font-size: 13px; border-top: 1px dashed #ccc; padding-top: 8px;">
+        <p><strong>Total Amount (In Words):</strong> <span id="invTotalInWords"
+            style="text-transform: capitalize;"></span></p>
       </div>
       <div class="invoice-terms">
         <p><strong>TERMS &amp; CONDITIONS</strong></p>
         <ol>
           <li>Goods once sold cannot be returned or exchanged.</li>
           <li>All disputes are subject to <span id="invDistrict">[DISTRICT NAME]</span> jurisdiction only.</li>
-          <li>We shall not be responsible for any damage to the Motor Kit, Controller, or Battery caused by accident, water, fire, short circuit, misuse, negligence, or any other external cause.</li>
+          <li>We shall not be responsible for any damage to the Motor Kit, Controller, or Battery caused by accident,
+            water, fire, short circuit, misuse, negligence, or any other external cause.</li>
           <li>Warranty, if applicable, will be subject to the manufacturer’s warranty terms and conditions.</li>
         </ol>
       </div>
       <div class="signature-section">
-        <div class="customer-signature"><p>Customer Signature</p></div>
-        <div class="authorised-signature"><p>AUTHORISED SIGNATORY FOR<br>DINO ELECTRIC CYCLE SHOP</p></div>
+        <div class="customer-signature">
+          <p>Customer Signature</p>
+        </div>
+        <div class="authorised-signature">
+          <p>AUTHORISED SIGNATORY FOR<br>DINO ELECTRIC CYCLE SHOP</p>
+        </div>
       </div>
     </div>
   </div>
@@ -191,31 +232,38 @@
   <!-- Bank Details Popup Modal -->
   <div id="bank-modal" class="modal-overlay hidden">
     <div class="modal-content">
-      <div class="modal-header"><h3 id="bankModalTitle">Bank Details</h3><span class="close-modal" onclick="closeBankModal()">&times;</span></div>
+      <div class="modal-header">
+        <h3 id="bankModalTitle">Bank Details</h3><span class="close-modal" onclick="closeBankModal()">&times;</span>
+      </div>
       <div class="modal-body">
-        <div class="form-group" style="margin-bottom: 10px;"><label>IFSC Code</label><input type="text" id="bankIfsc" oninput="preventRefreshInput(this)"></div>
-        <div class="form-group" style="margin-bottom: 10px;"><label>A/C Holder Name</label><input type="text" id="bankAccName" oninput="preventRefreshInput(this)"></div>
-        <div class="form-group" style="margin-bottom: 10px;"><label>A/C Number</label><input type="text" id="bankAccNo" oninput="preventRefreshInput(this)"></div>
-        <div class="form-group" style="margin-bottom: 10px;"><label>Branch</label><input type="text" id="bankBranch" oninput="preventRefreshInput(this)"></div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>IFSC Code</label><input type="text" id="bankIfsc"
+            oninput="preventRefreshInput(this)"></div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>A/C Holder Name</label><input type="text"
+            id="bankAccName" oninput="preventRefreshInput(this)"></div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>A/C Number</label><input type="text" id="bankAccNo"
+            oninput="preventRefreshInput(this)"></div>
+        <div class="form-group" style="margin-bottom: 10px;"><label>Branch</label><input type="text" id="bankBranch"
+            oninput="preventRefreshInput(this)"></div>
       </div>
       <!-- Select Bill Date To Print Modal -->
-<div id="print-select-modal" class="modal-overlay hidden">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h3>Select Bill Date to Print</h3>
-      <span class="close-modal" onclick="closePrintSelectModal()">&times;</span>
-    </div>
-    <div class="modal-body">
-      <div class="form-group">
-        <label>Choose Bill Date</label>
-        <select id="printSelectBillId" style="width:100%; padding:10px;"></select>
+      <div id="print-select-modal" class="modal-overlay hidden">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h3>Select Bill Date to Print</h3>
+            <span class="close-modal" onclick="closePrintSelectModal()">&times;</span>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Choose Bill Date</label>
+              <select id="printSelectBillId" style="width:100%; padding:10px;"></select>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn-primary" onclick="confirmPrintSelectedBill()"><i
+                class="fa-solid fa-print"></i> Print This Bill</button>
+          </div>
+        </div>
       </div>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn-primary" onclick="confirmPrintSelectedBill()"><i class="fa-solid fa-print"></i> Print This Bill</button>
-    </div>
-  </div>
-</div>
 
       <div class="modal-footer"><button type="button" class="btn-primary" onclick="closeBankModal()">Done</button></div>
     </div>
@@ -233,4 +281,5 @@
   <script src="js/features/branch-chat.js"></script>
 
 </body>
+
 </html>

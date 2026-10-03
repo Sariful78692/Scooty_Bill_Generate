@@ -15,6 +15,13 @@ let currentFilter = "all";
 let currentBranch = localStorage.getItem("daduBranch") || "Main Branch";
 let availableBranches = ["Main Branch"];
 
+window.formatIndianNumber = function(value, fractionDigits = 0) {
+  const number = Number(String(value ?? "").replace(/,/g, ""));
+  if (!Number.isFinite(number)) return "0";
+  return number.toLocaleString("en-IN", { minimumFractionDigits: fractionDigits, maximumFractionDigits: fractionDigits });
+};
+window.formatIndianAmount = function(value) { return window.formatIndianNumber(value, 2); };
+
 // Hash-based routing map
 const ROUTES = {
   "dashboard": { url: "Dashboard/dashboard.html", context: "dashboard" },
