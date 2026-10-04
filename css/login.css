@@ -1,5 +1,7 @@
 /* ========== LOGIN PAGE STYLES ========== */
-.login-page { min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #f1f5f9; padding: 25px; box-sizing: border-box; }
+.login-page { min-height: 100vh; position: relative; isolation: isolate; display: flex; align-items: center; justify-content: center; overflow: hidden; background: #071426; padding: 25px; box-sizing: border-box; }
+.login-page::before { content: ""; position: absolute; z-index: -2; inset: -5%; background: url("https://www.yakuzaev.com/wp-content/uploads/2026/07/Raavta-Thumbnail-700x525.webp") center / cover no-repeat; animation: loginBackgroundMove 18s ease-in-out infinite alternate; }
+.login-page::after { content: ""; position: absolute; z-index: -1; inset: 0; background: linear-gradient(115deg, rgba(3, 12, 29, .78), rgba(7, 26, 58, .48)); }
 .login-layout { width: min(980px, 100%); display: grid; grid-template-columns: 390px 1fr; align-items: center; gap: 55px; }
 .login-card { width: min(380px, 90%); background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 8px 30px rgba(15,23,42,.12); text-align: center; animation: loginIn .65s cubic-bezier(.2,.8,.2,1) both; margin: 0 auto; }
 .login-card h2 { color: #1d4ed8; margin: 5px 0 0; }
@@ -13,6 +15,9 @@
 .input-with-icon { position: relative; width: 100%; margin: 12px 0; }
 .input-with-icon i:not(.toggle-eye) { position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #94a3b8; font-size: 16px; transition: color 0.3s ease; z-index: 2; pointer-events: none; }
 .login-card .input-with-icon input { display: block; width: 100%; box-sizing: border-box; margin: 0; padding: 12px 40px 12px 42px; border: 1px solid #cbd5e1; border-radius: 6px; }
+.input-with-icon label { position: absolute; z-index: 3; top: 50%; left: 42px; padding: 0 4px; color: #64748b; font-size: 14px; line-height: 1; pointer-events: none; transform: translateY(-50%); transform-origin: left center; opacity: .78; transition: top .24s ease, transform .24s ease, color .24s ease, opacity .24s ease, font-size .24s ease, background-color .24s ease; }
+.input-with-icon input:focus + label,
+.input-with-icon input:not(:placeholder-shown) + label { top: 0; background: #fff; color: #2563eb; font-size: 11px; font-weight: 700; opacity: 1; transform: translateY(-50%); }
 .login-card .input-with-icon input:hover { transform: translateY(-3px); border-color: #60a5fa; box-shadow: 0 7px 16px rgba(37,99,235,.14); }
 .login-card .input-with-icon input:focus { outline: none; transform: translateY(-3px); border-color: #2563eb; box-shadow: 0 0 0 3px rgba(37,99,235,.16), 0 7px 16px rgba(37,99,235,.14); }
 .input-with-icon:focus-within i:not(.toggle-eye) { color: #2563eb; }
@@ -35,8 +40,13 @@
 .scooty-art { font-size: 82px; line-height: 1.1; margin-bottom: 8px; display: inline-block; color: #2563eb; filter: drop-shadow(0 8px 8px rgba(37,99,235,.2)); }
 
 .login-image-panel { text-align: center; animation: fadeUp .8s ease both; }
-.login-image-panel h1 { color: #1d4ed8; font-size: 28px; margin: 16px 0 4px; font-weight: 800; letter-spacing: 1px; }
-.login-image-panel p { color: #64748b; margin-top: 0; }
+.login-welcome-card { position: relative; height: 420px; overflow: hidden; background: #0f172a; border: 1px solid #dbeafe; border-radius: 18px; box-shadow: 0 14px 32px rgba(37,99,235,.14); }
+.login-welcome-card img { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; background: #0f172a; transform: translateX(100%); animation: rightCardSlide 9s cubic-bezier(.65, 0, .35, 1) infinite; }
+.login-welcome-card img:nth-child(1) { animation-delay: -1s; }
+.login-welcome-card img:nth-child(2) { animation-delay: 2s; }
+.login-welcome-card img:nth-child(3) { animation-delay: 5s; }
+.login-image-panel h1 { color: #1d4ed8; font-size: 28px; margin: 0 0 7px; font-weight: 800; letter-spacing: 1px; }
+.login-image-panel p { color: #64748b; margin: 0; line-height: 1.55; }
 
 .text-blue { color: #2563eb; }
 
@@ -44,13 +54,22 @@
 @keyframes fadeUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes floatScooty { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
 @keyframes pulseLogo { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.08); } }
+@keyframes loginBackgroundMove { from { transform: scale(1) translate3d(0, 0, 0); } to { transform: scale(1.12) translate3d(-1.5%, -1%, 0); } }
+@keyframes rightCardSlide { 0% { transform: translateX(100%); } 11%, 33% { transform: translateX(0); } 44%, 100% { transform: translateX(-100%); } }
 
 @media (max-width: 760px) {
   .login-page { min-height: 100dvh; padding: 16px; }
   .login-layout { width: 100%; grid-template-columns: 1fr; gap: 16px; }
   .login-image-panel { order: -1; }
-  .login-image-panel h1 { font-size: 21px; margin: 0 0 8px; }
+  .login-welcome-card { height: 300px; border-radius: 12px; }
   .login-card { width: 100%; max-width: 390px; box-sizing: border-box; padding: 22px 18px; margin: 0 auto; }
   .login-links { gap: 8px; flex-wrap: wrap; }
   .login-links button { font-size: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-page::before { animation: none; }
+  .input-with-icon label { transition: none; }
+  .login-welcome-card img { animation: none; }
+  .login-welcome-card img:first-child { transform: translateX(0); }
 }

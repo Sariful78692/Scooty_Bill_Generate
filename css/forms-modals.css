@@ -1,4 +1,4 @@
-.form-card { background: #fff; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); animation: fadeUp .5s ease both; }
+.form-card { background: linear-gradient(rgba(255, 255, 255, .92), rgba(255, 255, 255, .92)), url("../assets/texture.jpg") center / cover; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); animation: fadeUp .5s ease both; }
 .form-card h3 { margin-bottom: 15px; color: #2563eb; font-size: 18px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; }
 .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 15px; }
 .form-group { display: flex; flex-direction: column; }
@@ -22,7 +22,7 @@
 .btn-primary:hover, .btn-danger:hover, .btn-secondary:hover, .btn-print:hover, .btn-delete:hover, .btn-edit:hover { transform: translateY(-2px); filter: brightness(1.06); box-shadow: 0 6px 14px rgba(15,23,42,.16); }
 
 /* Settings Card */
-.settings-card { background: #fff; max-width: 520px; padding: 28px; border-radius: 12px; box-shadow: 0 4px 16px rgba(15,23,42,.08); }
+.settings-card { background: linear-gradient(rgba(255, 255, 255, .92), rgba(255, 255, 255, .92)), url("../assets/texture.jpg") center / cover; max-width: 520px; padding: 28px; border-radius: 12px; box-shadow: 0 4px 16px rgba(15,23,42,.08); }
 .settings-card button { margin: 8px 8px 0 0; }
 .settings-buttons { display: flex; gap: 10px; flex-wrap: wrap; }
 

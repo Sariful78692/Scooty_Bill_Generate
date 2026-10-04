@@ -28,13 +28,15 @@
           <!-- Username with Icon -->
           <div class="input-with-icon">
             <i class="fa-solid fa-user"></i>
-            <input type="text" id="login-username" placeholder="Branch Login ID" required autocomplete="username">
+            <input type="text" id="login-username" placeholder=" " required autocomplete="username">
+            <label for="login-username">Branch Login ID</label>
           </div>
 
           <!-- Password with Icon + Eye Toggle -->
           <div class="input-with-icon">
             <i class="fa-solid fa-lock"></i>
-            <input type="password" id="login-password" placeholder="Password" required autocomplete="current-password">
+            <input type="password" id="login-password" placeholder=" " required autocomplete="current-password">
+            <label for="login-password">Password</label>
             <i class="fa-solid fa-eye toggle-eye" id="toggle-password"></i>
           </div>
 
@@ -47,11 +49,13 @@
         </form>
       </div>
 
-      <!-- Right Side: Graphic/Image -->
+      <!-- Right Side: Welcome Image Card -->
       <div class="login-image-panel">
-        <i class="fa-solid fa-motorcycle scooty-art text-blue"></i>
-        <h1>Welcome Back!</h1>
-        <p>Manage your customers, inventory, and billing efficiently.</p>
+        <div class="login-welcome-card">
+          <img src="https://www.yakuzaev.com/wp-content/uploads/2026/09/Y1-thumbnail-700x525.webp" alt="Yakuza electric vehicle">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSYYA3YTFvv2eA-fxLYUmAySuBlk5rvoyO1lCI-JMkbfg&s=10" alt="Yakuza electric scooter">
+          <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRvuO5QoDan4Jm5xhX-0mw1c4G6Lz1Giw_KttiEH_Pe0g&s=10" alt="Yakuza electric vehicle model">
+        </div>
       </div>
 
     </div>

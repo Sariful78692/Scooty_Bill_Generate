@@ -5,7 +5,7 @@
 }
 
 .stat-card {
-  background: #fff;
+  background: linear-gradient(rgba(255, 255, 255, .89), rgba(255, 255, 255, .89)), url("../assets/texture.jpg") center / cover;
   border-radius: 12px;
   padding: 20px 25px;
   display: flex;
@@ -147,7 +147,7 @@
 }
 
 .chart-card {
-  background: #fff;
+  background: linear-gradient(rgba(255, 255, 255, .92), rgba(255, 255, 255, .92)), url("../assets/texture.jpg") center / cover;
   padding: 20px;
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
