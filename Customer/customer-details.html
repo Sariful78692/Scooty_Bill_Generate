@@ -1,15 +1,15 @@
 <section id="customer-details-section" class="content-section">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-    <h1 id="details-view-title" style="margin: 0;">Customer Details (All)</h1>
-    
+  <h1 id="details-view-title">Customer Details (All)</h1>
+
+  <div class="customer-detail-controls">
     <!-- Search Box -->
-    <div style="flex: 1; max-width: 300px;">
+    <div class="customer-search-wrap">
       <input type="text" id="customerSearchInput" placeholder="Search by Name or Mobile..." onkeyup="filterCustomerDetailsTable()" style="width: 100%; padding: 10px; border: 1px solid #cbd5e1; border-radius: 6px; font-size: 14px;">
     </div>
-  </div>
-  <div id="customer-branch-filter-group" style="display:none;max-width:320px;margin:0 0 14px;">
-    <label for="customerBranchFilter">View Branch</label>
-    <select id="customerBranchFilter" onchange="changeCustomerBranchFilter(this.value)" style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;"></select>
+    <div id="customer-branch-filter-group" class="customer-branch-filter" style="display:none;">
+      <label for="customerBranchFilter">View Branch</label>
+      <select id="customerBranchFilter" onchange="changeCustomerBranchFilter(this.value)" style="width:100%;padding:10px 12px;border:1px solid #cbd5e1;border-radius:8px;background:#fff;"></select>
+    </div>
   </div>
   
   <div id="customer-pagination" style="margin:0 0 12px;"></div>
