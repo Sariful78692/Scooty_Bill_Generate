@@ -8,6 +8,9 @@ th { background-color: #f8fafc; color: #475569; }
 .action-btns { display: flex; gap: 5px; align-items: center; }
 .btn-edit { background-color: #eab308; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; }
 .btn-delete { background-color: #ef4444; color: #fff; border: none; padding: 6px 10px; border-radius: 4px; }
+.table-pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-top: 16px; padding: 12px 16px; border: 1px solid #dbe3ee; border-radius: 10px; background: #f8fafc; color: #526783; }
+.table-pagination label, .table-pagination > div { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.table-pagination select { padding: 9px 12px; border: 1px solid #cbd5e1; border-radius: 8px; background: #fff; color: #334155; }
 
 /* Customer Photo Zoom Effect */
 .cust-photo-img { width: 45px !important; height: 45px !important; border-radius: 50%; object-fit: cover; cursor: zoom-in; transition: transform 0.25s ease, box-shadow 0.25s ease; position: relative; z-index: 1; }
@@ -19,6 +22,10 @@ th { background-color: #f8fafc; color: #475569; }
   .table-responsive table { width: max-content; min-width: 620px; }
   .table-responsive th, .table-responsive td { padding: 9px 10px; font-size: 13px; }
   .action-btns { flex-wrap: wrap; }
+  .table-pagination { align-items: stretch; padding: 11px; }
+  .table-pagination > div { width: 100%; justify-content: space-between; }
+  .table-pagination button { min-width: 95px; flex: 1 1 95px; }
+  .table-pagination select { min-height: 40px; }
 }
 
 @media (max-width: 420px) {

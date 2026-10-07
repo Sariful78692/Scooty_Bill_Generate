@@ -59,6 +59,20 @@ window.calculateVehicleTotalCost = function() {
   if (total) total.value = (cost * (1 + (cgst + sgst + igst) / 100)).toFixed(2);
 };
 
+let vehicleStockCurrentPage = 1;
+let vehicleStockPageSize = "10";
+
+window.changeVehicleStockPageSize = function(size) {
+  vehicleStockPageSize = size;
+  vehicleStockCurrentPage = 1;
+  renderVehicleStock();
+};
+
+window.changeVehicleStockPage = function(direction) {
+  vehicleStockCurrentPage = Math.max(1, vehicleStockCurrentPage + direction);
+  renderVehicleStock();
+};
+
 window.renderVehicleStock = function() {
   const app = document.getElementById("app-content");
   const editing = window.editingVehicleStock || null;
@@ -78,8 +92,17 @@ window.renderVehicleStock = function() {
     ["totalCostPrice", "Total Cost Price", "number", true]
   ];
   const availableStock = getAvailableVehicleStockList();
-  const rows = availableStock.slice().reverse().map(item => `<tr>${fields.map(field => `<td>${escapeHtml(item[field[4] || field[1]] ?? "")}</td>`).join("")}<td><div class="action-btns"><button class="btn-edit" type="button" title="Edit" onclick="editVehicleStock('${escapeHtml(item.ID)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-delete" type="button" title="Delete" onclick="deleteVehicleStock('${escapeHtml(item.ID)}')"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join("");
-  app.innerHTML = `<section class="content-section"><h1><i class="fa-solid fa-warehouse"></i> Stock Management</h1><div class="form-card"><h3>${editing ? "Edit Vehicle Stock" : "Vehicle Stock Entry"}</h3><form id="vehicle-stock-form"><input type="hidden" id="vehicle-stock-id" value="${editing ? escapeHtml(editing.ID) : ""}"><div class="form-grid">${fields.map(([id, label, type, required]) => { const numeric = type === "number"; const readonly = id === "totalCostPrice"; const duplicateCheck = id === "chassisNo" || id === "engineNo"; const textInput = type === "text"; const inputHandler = textInput ? `this.value=this.value.toUpperCase();${duplicateCheck ? "validateVehicleStockDuplicates();" : ""}` : (duplicateCheck ? "validateVehicleStockDuplicates();" : ""); return `<div class="form-group"><label for="${id}">${label}</label><input id="${id}" name="${id}" type="${type}" ${numeric ? 'min="0" step="any"' : (textInput ? `maxlength="100" oninput="${inputHandler}"` : "")} ${required ? "required" : ""} ${readonly ? 'readonly style="background:#e2e8f0"' : ""} ${id === "costPrice" || id === "cgst" || id === "sgst" || id === "igst" ? 'oninput="calculateVehicleTotalCost()"' : ""} value="${editing ? escapeHtml(editing[fields.find(field => field[0] === id)?.[4] || label] ?? "") : ""}"></div>`; }).join("")}</div><div id="vehicle-stock-duplicate-warning" style="display:none;color:#dc2626;font-weight:700;margin-top:12px;">Already exist: this Chassis No or Engine No is already in stock.</div><div class="form-actions"><button class="btn-primary" id="vehicle-stock-submit" type="submit"><i class="fa-solid fa-${editing ? "floppy-disk" : "plus"}"></i> ${editing ? "Update" : "Submit"}</button>${editing ? `<button class="btn-secondary" type="button" id="vehicle-stock-cancel">Cancel</button>` : ""}</div></form></div><div class="table-responsive"><h3>Vehicle Stock List</h3><table><thead><tr>${fields.map(([, label]) => `<th>${label}</th>`).join("")}<th>Actions</th></tr></thead><tbody>${rows || `<tr><td colspan="${fields.length + 1}" class="text-center">No vehicle stock entries yet.</td></tr>`}</tbody></table></div></section>`;
+  const stockRows = availableStock.slice().reverse();
+  const pageSize = vehicleStockPageSize === "all" ? Math.max(stockRows.length, 1) : Number(vehicleStockPageSize);
+  const pageCount = Math.max(1, Math.ceil(stockRows.length / pageSize));
+  vehicleStockCurrentPage = Math.min(vehicleStockCurrentPage, pageCount);
+  const startIndex = (vehicleStockCurrentPage - 1) * pageSize;
+  const pageRows = stockRows.slice(startIndex, startIndex + pageSize);
+  const rows = pageRows.map(item => `<tr>${fields.map(field => `<td>${escapeHtml(item[field[4] || field[1]] ?? "")}</td>`).join("")}<td><div class="action-btns"><button class="btn-edit" type="button" title="Edit" onclick="editVehicleStock('${escapeHtml(item.ID)}')"><i class="fa-solid fa-pen"></i></button><button class="btn-delete" type="button" title="Delete" onclick="deleteVehicleStock('${escapeHtml(item.ID)}')"><i class="fa-solid fa-trash"></i></button></div></td></tr>`).join("");
+  const rangeStart = pageRows.length ? startIndex + 1 : 0;
+  const rangeEnd = pageRows.length ? startIndex + pageRows.length : 0;
+  const pagination = `<div id="vehicle-stock-pagination" class="table-pagination"><label>Stock entries per page <select onchange="changeVehicleStockPageSize(this.value)"><option value="10" ${vehicleStockPageSize === "10" ? "selected" : ""}>10</option><option value="50" ${vehicleStockPageSize === "50" ? "selected" : ""}>50</option><option value="all" ${vehicleStockPageSize === "all" ? "selected" : ""}>All</option></select></label><div><span>Showing ${rangeStart}–${rangeEnd} of ${stockRows.length}</span><button type="button" class="btn-secondary" onclick="changeVehicleStockPage(-1)" ${vehicleStockCurrentPage <= 1 ? "disabled" : ""}>Previous</button><button type="button" class="btn-secondary" onclick="changeVehicleStockPage(1)" ${vehicleStockCurrentPage >= pageCount ? "disabled" : ""}>Next</button></div></div>`;
+  app.innerHTML = `<section class="content-section"><h1><i class="fa-solid fa-warehouse"></i> Stock Management</h1><div class="form-card"><h3>${editing ? "Edit Vehicle Stock" : "Vehicle Stock Entry"}</h3><form id="vehicle-stock-form"><input type="hidden" id="vehicle-stock-id" value="${editing ? escapeHtml(editing.ID) : ""}"><div class="form-grid">${fields.map(([id, label, type, required]) => { const numeric = type === "number"; const readonly = id === "totalCostPrice"; const duplicateCheck = id === "chassisNo" || id === "engineNo"; const textInput = type === "text"; const inputHandler = textInput ? `this.value=this.value.toUpperCase();${duplicateCheck ? "validateVehicleStockDuplicates();" : ""}` : (duplicateCheck ? "validateVehicleStockDuplicates();" : ""); return `<div class="form-group"><label for="${id}">${label}</label><input id="${id}" name="${id}" type="${type}" ${numeric ? 'min="0" step="any"' : (textInput ? `maxlength="100" oninput="${inputHandler}"` : "")} ${required ? "required" : ""} ${readonly ? 'readonly style="background:#e2e8f0"' : ""} ${id === "costPrice" || id === "cgst" || id === "sgst" || id === "igst" ? 'oninput="calculateVehicleTotalCost()"' : ""} value="${editing ? escapeHtml(editing[fields.find(field => field[0] === id)?.[4] || label] ?? "") : ""}"></div>`; }).join("")}</div><div id="vehicle-stock-duplicate-warning" style="display:none;color:#dc2626;font-weight:700;margin-top:12px;">Already exist: this Chassis No or Engine No is already in stock.</div><div class="form-actions"><button class="btn-primary" id="vehicle-stock-submit" type="submit"><i class="fa-solid fa-${editing ? "floppy-disk" : "plus"}"></i> ${editing ? "Update" : "Submit"}</button>${editing ? `<button class="btn-secondary" type="button" id="vehicle-stock-cancel">Cancel</button>` : ""}</div></form></div><div class="table-responsive"><h3>Vehicle Stock List</h3>${pagination}<table><thead><tr>${fields.map(([, label]) => `<th>${label}</th>`).join("")}<th>Actions</th></tr></thead><tbody>${rows || `<tr><td colspan="${fields.length + 1}" class="text-center">No vehicle stock entries yet.</td></tr>`}</tbody></table></div></section>`;
   calculateVehicleTotalCost();
   if (!document.getElementById("date").value) {
     const today = new Date();
