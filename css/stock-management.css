@@ -13,3 +13,37 @@
 .stock-report-summary:hover { transform: translateY(-4px) !important; box-shadow: 0 14px 28px rgba(15, 23, 42, .12) !important; }
 
 @media (max-width: 760px) { .stock-report-summary-grid { grid-template-columns: 1fr; } }
+/* Car Transfer summary */
+.transfer-stock-summary {
+  min-height: 126px;
+  border: 0;
+  background: linear-gradient(135deg, #4338ca 0%, #2563eb 52%, #0891b2 100%);
+  color: #fff;
+  box-shadow: 0 12px 25px rgba(37, 99, 235, .24);
+}
+.transfer-stock-summary::after {
+  position: absolute;
+  right: -34px;
+  bottom: -48px;
+  width: 154px;
+  height: 154px;
+  border: 26px solid rgba(255, 255, 255, .12);
+  border-radius: 50%;
+  content: "";
+}
+.transfer-stock-summary .stat-title { color: #dbeafe; }
+.transfer-stock-summary .stat-value { color: #fff; font-size: 34px; }
+.transfer-stock-summary-icon {
+  z-index: 2;
+  display: grid;
+  flex: 0 0 52px;
+  width: 52px;
+  height: 52px;
+  margin-right: 18px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, .16);
+  color: #fff;
+  font-size: 23px;
+  place-items: center;
+}

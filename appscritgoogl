@@ -126,6 +126,37 @@ function doPost(e) {
     if (data.action === "get_vehicle_stock") {
       return jsonResponse({status:"success", vehicleStock:getAvailableVehicleStock(SpreadsheetApp.getActiveSpreadsheet(), authBranch)});
     }
+    if (data.action === "get_vehicle_transfer_report") {
+      if (!isMainBranch(authBranch)) return jsonResponse({status:"error", message:"Only Main Branch can view the vehicle transfer report."});
+      var transferReportSheet = ensureVehicleTransferSheet(SpreadsheetApp.getActiveSpreadsheet());
+      var transferReportRows = sheetObjectsToRows(transferReportSheet).reverse();
+      return jsonResponse({status:"success", transfers:transferReportRows});
+    }
+    if (data.action === "transfer_vehicle_stock") {
+      if (!isMainBranch(authBranch)) return jsonResponse({status:"error", message:"Only Main Branch can transfer vehicle stock."});
+      var destinationBranch = String(data.destinationBranch || "").trim();
+      if (!destinationBranch || isMainBranch(destinationBranch)) return jsonResponse({status:"error", message:"Choose a valid destination branch."});
+      var transferBranches = getOrCreateSheet(SpreadsheetApp.getActiveSpreadsheet(), "Branches", ["Branch"]).getDataRange().getDisplayValues().slice(1).map(function(row) { return String(row[0] || "").trim(); });
+      var matchedDestination = transferBranches.filter(function(branch) { return branch.toLowerCase() === destinationBranch.toLowerCase(); })[0];
+      if (!matchedDestination) return jsonResponse({status:"error", message:"Destination branch was not found."});
+      var transferSheet = ensureVehicleStockSheet(SpreadsheetApp.getActiveSpreadsheet());
+      var transferRows = transferSheet.getDataRange().getDisplayValues();
+      var transferHeaders = transferRows[0].map(function(header) { return String(header).trim(); });
+      var transferIdColumn = transferHeaders.indexOf("ID");
+      var transferBranchColumn = transferHeaders.indexOf("Branch");
+      var transferRow = -1;
+      for (var ti = 1; ti < transferRows.length; ti++) {
+        if (String(transferRows[ti][transferIdColumn] || "").trim() === String(data.id || "").trim() && isMainBranch(normalizeBranch(transferRows[ti][transferBranchColumn]))) { transferRow = ti + 1; break; }
+      }
+      if (transferRow < 0) return jsonResponse({status:"error", message:"Main Branch vehicle stock was not found. It may already have been transferred or sold."});
+      var transferRecord = {};
+      transferHeaders.forEach(function(header, index) { transferRecord[header] = transferRows[transferRow - 1][index]; });
+      transferSheet.getRange(transferRow, transferBranchColumn + 1).setValue(matchedDestination);
+      ensureVehicleTransferSheet(SpreadsheetApp.getActiveSpreadsheet()).appendRow([
+        "VT-" + new Date().getTime(), new Date(), transferRecord["Vehicle Name"] || "", transferRecord["Vehicle Company"] || "", transferRecord["Vehicle Model"] || "", transferRecord["Vehicle Colour"] || "", transferRecord["Chassis No"] || "", transferRecord["Engine No"] || "", "Main Branch", matchedDestination
+      ]);
+      return jsonResponse({status:"success"});
+    }
     if (data.action === "save_vehicle_stock" || data.action === "update_vehicle_stock" || data.action === "delete_vehicle_stock") {
       var vehicleSheet = ensureVehicleStockSheet(SpreadsheetApp.getActiveSpreadsheet());
       var vehicleRows = vehicleSheet.getDataRange().getDisplayValues();
@@ -684,6 +715,9 @@ function ensureVehicleStockSheet(ss) {
   var existing = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getDisplayValues()[0].map(function(value) { return String(value).trim(); });
   headers.forEach(function(header) { if (existing.indexOf(header) === -1) { sheet.getRange(1, sheet.getLastColumn() + 1).setValue(header); existing.push(header); } });
   return sheet;
+}
+function ensureVehicleTransferSheet(ss) {
+  return getOrCreateSheet(ss, "Vehicle Transfers", ["ID", "Timestamp", "Vehicle Name", "Vehicle Company", "Vehicle Model", "Vehicle Colour", "Chassis No", "Engine No", "From Branch", "To Branch"]);
 }
 function getAvailableVehicleStock(ss, branch) {
   var stockSheet = ensureVehicleStockSheet(ss);

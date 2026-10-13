@@ -12,7 +12,31 @@ body { background: #f4f6f9 url("../assets/texture.jpg") repeat; color: #333; ove
 .customer-search-wrap { flex: 1; max-width: 420px; }
 .customer-branch-filter { flex: 0 1 320px; min-width: 220px; }
 .customer-branch-filter label { display: block; margin-bottom: 5px; color: #475569; font-size: 13px; font-weight: 600; }
-.content-section h1 { margin-bottom: 20px; font-size: 24px; color: #0f172a; }
+/* Shared page title card: applies to each page without changing its markup. */
+.content-section > h1 {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-height: 68px;
+  margin: 0 0 22px;
+  padding: 16px 22px;
+  overflow: hidden;
+  border: 1px solid #dbeafe;
+  border-radius: 14px;
+  background: linear-gradient(115deg, rgba(255,255,255,.97), rgba(239,246,255,.93)), url("../assets/texture.jpg") center / cover;
+  color: #0f172a;
+  font-size: 24px;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, .07);
+}
+.content-section > h1::before {
+  width: 5px;
+  align-self: stretch;
+  border-radius: 6px;
+  background: linear-gradient(#0ea5e9, #2563eb);
+  content: "";
+}
+.content-section > h1 > i { color: #2563eb; font-size: .95em; }
 .hidden { display: none !important; }
 .text-center { text-align: center; }
 .bill-search-filters { display: flex; align-items: end; gap: 15px; margin-bottom: 20px; }
@@ -21,6 +45,7 @@ body { background: #f4f6f9 url("../assets/texture.jpg") repeat; color: #333; ove
 /* Floating branch-to-branch chat */
 .branch-chat-toggle { position: fixed; right: 22px; bottom: 66px; z-index: 10001; display: flex; align-items: center; gap: 10px; min-height: 52px; padding: 0 19px; border: 0; border-radius: 28px; background: linear-gradient(135deg, #0284c7, #2563eb); color: #fff; font-size: 14px; font-weight: 700; box-shadow: 0 9px 24px rgba(37, 99, 235, .32); cursor: pointer; transition: transform .22s ease, box-shadow .22s ease; }
 .branch-chat-toggle i { font-size: 19px; }
+#branch-chat-toggle { width: 52px; justify-content: center; padding: 0 !important; border-radius: 50%; }
 .branch-chat-toggle:hover { transform: translateY(-3px); box-shadow: 0 13px 28px rgba(37, 99, 235, .38); }
 .branch-chat-panel { position: fixed; right: 22px; bottom: 130px; z-index: 10002; display: flex; flex-direction: column; width: min(370px, calc(100vw - 32px)); height: min(540px, calc(100dvh - 164px)); min-height: 330px; overflow: hidden; border: 1px solid #dbe3ee; border-radius: 16px; background: #fff; box-shadow: 0 20px 55px rgba(15, 23, 42, .24); animation: chatPanelIn .22s ease both; }
 .branch-chat-header { display: flex; align-items: center; justify-content: space-between; padding: 15px 17px; background: linear-gradient(120deg, #0f172a, #1e3a5f); color: #fff; }

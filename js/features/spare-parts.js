@@ -149,6 +149,64 @@ window.validateVehicleStockDuplicates = function() {
   return duplicate;
 };
 
+window.renderCarTransfer = function() {
+  const app = document.getElementById("app-content");
+  if (!app) return;
+  const isMainBranch = String(currentBranch || "").trim().toLowerCase() === "main branch";
+  if (!isMainBranch) {
+    app.innerHTML = `<section class="content-section"><h1><i class="fa-solid fa-right-left"></i> Car Transfer</h1><div class="form-card"><p style="margin:0;color:#475569">Only Main Branch can transfer vehicle stock to another branch.</p></div></section>`;
+    return;
+  }
+
+  const normalizeBranch = value => String(value || "").trim().toLowerCase();
+  const mainStock = (getAvailableVehicleStockList() || []).filter(stock => normalizeBranch(stock.Branch || "Main Branch") === "main branch");
+  const destinations = (availableBranches || []).filter(branch => normalizeBranch(branch) && normalizeBranch(branch) !== "main branch");
+  const vehicleLabel = stock => [stock["Vehicle Company"], stock["Vehicle Model"], stock["Vehicle Colour"]].filter(Boolean).join(" ") || stock["Vehicle Name"] || "Vehicle";
+  const optionLabel = stock => `${vehicleLabel(stock)} — Chassis: ${stock["Chassis No"] || "N/A"}${stock["Engine No"] ? ` | Engine: ${stock["Engine No"]}` : ""}`;
+
+  app.innerHTML = `<section class="content-section"><h1><i class="fa-solid fa-right-left"></i> Car Transfer</h1><p style="margin:-8px 0 20px;color:#64748b">Select a vehicle from Main Branch stock and transfer it to another branch.</p><div class="dashboard-cards" style="margin:0 0 24px"><div class="stat-card transfer-stock-summary"><span class="transfer-stock-summary-icon"><i class="fa-solid fa-warehouse"></i></span><div class="stat-info"><span class="stat-title">Main Branch Available Stock</span><h2 class="stat-value">${mainStock.length}</h2></div></div></div><div class="form-card"><h3>Transfer Vehicle</h3>${destinations.length ? `<form id="car-transfer-form"><div class="form-grid"><div class="form-group"><label for="transfer-vehicle-id">Vehicle from Main Branch</label><select id="transfer-vehicle-id" required><option value="">Select a vehicle</option>${mainStock.map(stock => `<option value="${escapeHtml(stock.ID)}">${escapeHtml(optionLabel(stock))}</option>`).join("")}</select></div><div class="form-group"><label for="transfer-destination-branch">Transfer to Branch</label><select id="transfer-destination-branch" required><option value="">Select destination branch</option>${destinations.map(branch => `<option value="${escapeHtml(branch)}">${escapeHtml(branch)}</option>`).join("")}</select></div></div><div class="form-actions"><button type="submit" id="car-transfer-submit" class="btn-primary" ${mainStock.length ? "" : "disabled"}><i class="fa-solid fa-right-left"></i> Transfer Vehicle</button></div></form>` : `<p style="margin:0;color:#64748b">Create at least one other branch before transferring a vehicle.</p>`}</div><div class="table-responsive"><h3>Main Branch Stock</h3><table><thead><tr><th>Vehicle</th><th>Company</th><th>Model</th><th>Colour</th><th>Chassis No</th><th>Engine No</th></tr></thead><tbody>${mainStock.length ? mainStock.map(stock => `<tr><td>${escapeHtml(stock["Vehicle Name"] || "")}</td><td>${escapeHtml(stock["Vehicle Company"] || "")}</td><td>${escapeHtml(stock["Vehicle Model"] || "")}</td><td>${escapeHtml(stock["Vehicle Colour"] || "")}</td><td>${escapeHtml(stock["Chassis No"] || "")}</td><td>${escapeHtml(stock["Engine No"] || "")}</td></tr>`).join("") : `<tr><td colspan="6" class="text-center">No vehicle stock is available in Main Branch.</td></tr>`}</tbody></table></div></section>`;
+
+  document.getElementById("car-transfer-form")?.addEventListener("submit", async event => {
+    event.preventDefault();
+    const vehicleId = document.getElementById("transfer-vehicle-id").value;
+    const destinationBranch = document.getElementById("transfer-destination-branch").value;
+    const selected = mainStock.find(stock => String(stock.ID) === String(vehicleId));
+    if (!selected || !destinationBranch) return;
+    if (!confirm(`Transfer ${vehicleLabel(selected)} (Chassis: ${selected["Chassis No"] || "N/A"}) to ${destinationBranch}?`)) return;
+    const button = document.getElementById("car-transfer-submit");
+    const originalHtml = button.innerHTML;
+    button.disabled = true;
+    button.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Transferring...';
+    try {
+      const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"transfer_vehicle_stock", id:vehicleId, destinationBranch})});
+      const result = await response.json();
+      if (!response.ok || result.status !== "success") throw new Error(result.message || "Could not transfer vehicle stock.");
+      showToast("Vehicle transferred successfully.");
+      await loadCustomers(true);
+      renderCarTransfer();
+    } catch (error) {
+      showToast(error.message || "Could not connect to the server.", "error");
+      button.disabled = false;
+      button.innerHTML = originalHtml;
+    }
+  });
+};
+
+window.renderVehicleTransferReport = async function() {
+  const app = document.getElementById("app-content");
+  if (!app) return;
+  const isMainBranch = String(currentBranch || "").trim().toLowerCase() === "main branch";
+  if (!isMainBranch) {
+    app.innerHTML = `<section class="content-section"><h1><i class="fa-solid fa-clipboard-list"></i> Transfer Report</h1><div class="form-card"><p style="margin:0;color:#475569">Only Main Branch can view the vehicle transfer report.</p></div></section>`;
+    return;
+  }
+  const response = await apiFetch(APPS_SCRIPT_URL, {method:"POST", body:JSON.stringify({action:"get_vehicle_transfer_report"})});
+  const result = await response.json();
+  if (!response.ok || result.status !== "success") throw new Error(result.message || "Could not load transfer report.");
+  const transfers = result.transfers || [];
+  app.innerHTML = `<section class="content-section"><h1><i class="fa-solid fa-clipboard-list"></i> Transfer Report</h1><p style="margin:-8px 0 20px;color:#64748b">History of vehicles transferred from Main Branch to other branches.</p><div class="dashboard-cards" style="margin:0 0 24px"><div class="stat-card transfer-stock-summary"><span class="transfer-stock-summary-icon"><i class="fa-solid fa-right-left"></i></span><div class="stat-info"><span class="stat-title">Total Vehicles Transferred</span><h2 class="stat-value">${transfers.length}</h2></div></div></div><div class="table-responsive"><h3>Vehicle Transfer History</h3><table><thead><tr><th>Date &amp; Time</th><th>Vehicle</th><th>Company</th><th>Model</th><th>Colour</th><th>Chassis No</th><th>Engine No</th><th>From Branch</th><th>To Branch</th></tr></thead><tbody>${transfers.length ? transfers.map(transfer => `<tr><td>${escapeHtml(transfer.Timestamp || "")}</td><td>${escapeHtml(transfer["Vehicle Name"] || "")}</td><td>${escapeHtml(transfer["Vehicle Company"] || "")}</td><td>${escapeHtml(transfer["Vehicle Model"] || "")}</td><td>${escapeHtml(transfer["Vehicle Colour"] || "")}</td><td>${escapeHtml(transfer["Chassis No"] || "")}</td><td>${escapeHtml(transfer["Engine No"] || "")}</td><td>${escapeHtml(transfer["From Branch"] || "Main Branch")}</td><td>${escapeHtml(transfer["To Branch"] || "")}</td></tr>`).join("") : `<tr><td colspan="9" class="text-center">No vehicle transfers have been recorded yet.</td></tr>`}</tbody></table></div></section>`;
+};
+
 let stockReportSelectedBranch = "all";
 window.renderVehicleStockReport = function(branchFilter = stockReportSelectedBranch) {
   const app = document.getElementById("app-content");

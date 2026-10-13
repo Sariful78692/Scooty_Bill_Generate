@@ -1,5 +1,5 @@
 // Paste your NEW deployed Google Apps Script Web App URL here!
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzjBx3jElGBm8aoZ0Dr1SBFL91IfajaxyLTyUViPxKzsYGH10gu6JygY3BWm5HnHtXZdA/exec";
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbz5Syyd6h0qpN_5Z7kX7LGbmOYHZrFAkkcSG0chTZogZZQsG-2bXS69qTPGdmeQULSA7g/exec";
 
 // Global Variables
 let customerDataList = [];
@@ -267,6 +267,24 @@ function handleRouteFromHash() {
     (mainDataLoaded ? Promise.resolve() : loadVehicleStockData()).then(() => {
       if (location.hash.replace("#", "") === "stock-management" && typeof renderVehicleStock === "function") renderVehicleStock();
     }).catch(error => { if (location.hash.replace("#", "") === "stock-management") document.getElementById("app-content").innerHTML = `<section class="content-section"><h1>Stock Management</h1><p>${escapeHtml(error.message || "Could not load stock.")}</p></section>`; }).finally(() => hidePageLoader(loaderRequestId));
+    setActiveNav(hash);
+    return;
+  }
+  if (hash === "car-transfer") {
+    const loaderRequestId = showPageLoader();
+    (mainDataLoaded ? Promise.resolve() : loadCustomers()).then(() => {
+      if (location.hash.replace("#", "") === "car-transfer" && typeof renderCarTransfer === "function") renderCarTransfer();
+    }).catch(error => {
+      if (location.hash.replace("#", "") === "car-transfer") document.getElementById("app-content").innerHTML = `<section class="content-section"><h1>Car Transfer</h1><p>${escapeHtml(error.message || "Could not load stock.")}</p></section>`;
+    }).finally(() => hidePageLoader(loaderRequestId));
+    setActiveNav(hash);
+    return;
+  }
+  if (hash === "transfer-report") {
+    const loaderRequestId = showPageLoader();
+    (typeof renderVehicleTransferReport === "function" ? renderVehicleTransferReport() : Promise.resolve()).catch(error => {
+      if (location.hash.replace("#", "") === "transfer-report") document.getElementById("app-content").innerHTML = `<section class="content-section"><h1>Transfer Report</h1><p>${escapeHtml(error.message || "Could not load transfer report.")}</p></section>`;
+    }).finally(() => hidePageLoader(loaderRequestId));
     setActiveNav(hash);
     return;
   }
